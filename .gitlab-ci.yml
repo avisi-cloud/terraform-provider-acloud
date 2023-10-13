@@ -1,0 +1,23 @@
+stages:
+  - test
+  - build
+
+include:
+  - 'https://gitlab.avisi.cloud/ame/ci/raw/master/.templates/golang.yaml'
+  - 'https://gitlab.avisi.cloud/ame/ci/raw/master/.templates/docker-20.yaml'
+
+variables:
+  BRANCH: $CI_COMMIT_BRANCH
+  COMMIT: $CI_COMMIT_SHA
+  VERSION: $CI_COMMIT_TAG
+
+go:test:
+  extends: .go:test
+  stage: test
+
+go:build:
+  extends: .go:releaser:build-docker
+  stage: build
+  when: manual
+  except:
+    - tags
