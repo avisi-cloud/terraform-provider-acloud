@@ -17,8 +17,8 @@ Verify the installation by running terraform init in a Terraform configuration t
 terraform {
   required_providers {
     acloud = {
-      version = "0.2"
-      source  = "avisi-cloud/terraform-provider-acloud"
+      version = "v0.1.1"
+      source  = "avisi-cloud/acloud"
     }
   }
 }

@@ -1,6 +1,6 @@
-module gitlab.avisi.cloud/ame/terraform-proivder-acloud
+module github.com/avisi-cloud/terraform-proivder-acloud
 
-go 1.20
+go 1.21
 
 require (
 	github.com/avisi-cloud/go-client v0.1.1
