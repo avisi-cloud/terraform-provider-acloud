@@ -3,7 +3,7 @@ module github.com/avisi-cloud/terraform-proivder-acloud
 go 1.21
 
 require (
-	github.com/avisi-cloud/go-client v0.1.1
+	github.com/avisi-cloud/go-client v0.2.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.28.0
 	golang.org/x/exp v0.0.0-20230801115018-d63ba01acd4b
 )

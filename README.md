@@ -3,21 +3,13 @@
 ## Description
 The terraform-provider-acloud is a custom Terraform provider that allows you to manage resources for Avisi Cloud.
 
-## Installation
-To use this provider, follow these steps:
-
-Download the latest release from the [Releases page](https://github.com/avisi-cloud/terraform-provider-acloud/releases).
-Extract the binary for your platform.
-Place the binary in a directory included in your system's PATH.
-Verify the installation by running terraform init in a Terraform configuration that references this provider.
-
 ## Usage
 
 ```terraform
 terraform {
   required_providers {
     acloud = {
-      version = "v0.1.1"
+      version = "0.1"
       source  = "avisi-cloud/acloud"
     }
   }
@@ -78,4 +70,5 @@ resource "acloud_nodepool" "staging_nodepool" {
 ```
 
 ## License
+
 [Apache 2.0 License 2.0](lICENSE)

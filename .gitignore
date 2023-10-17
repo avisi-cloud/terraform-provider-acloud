@@ -4,6 +4,8 @@ bin
 
 .idea
 
+terraform.tfvars
+
 */.terraform.lock.hcl
 
 # Created by https://www.toptal.com/developers/gitignore/api/go,terraform

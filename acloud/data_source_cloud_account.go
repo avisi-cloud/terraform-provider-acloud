@@ -51,7 +51,7 @@ func dataCloudAccountRead(ctx context.Context, d *schema.ResourceData, m interfa
 	displayName := d.Get("display_name").(string)
 	cloudProvider := d.Get("cloud_provider").(string)
 
-	cloudAccount, err := client.GetCloudAccount(ctx, org, displayName, cloudProvider)
+	cloudAccount, err := client.FindCloudAccountByName(ctx, org, displayName, cloudProvider)
 	if err != nil {
 		return diag.FromErr(err)
 	}
