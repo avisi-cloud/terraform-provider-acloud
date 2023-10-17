@@ -1,66 +1,64 @@
 terraform {
   required_providers {
     acloud = {
-      version = "v0.1.1"
+      version = "0.1"
       source  = "avisi-cloud/acloud"
     }
   }
 }
 
-provider "acloud" {}
+variable "acloud_token" {
+}
 
-data "acloud_cloud_account" "demo_aws-cloud-account" {
-  organisation   = "demo"
-  display_name   = "staging"
+variable "organisation_slug" {
+}
+
+variable "environment_slug" {
+}
+
+provider "acloud" {
+  token = var.acloud_token
+}
+
+data "acloud_cloud_account" "demo" {
+  organisation   = var.organisation_slug
+  display_name   = "demo"
   cloud_provider = "aws"
 }
 
-resource "acloud_environment" "demo_terraform-test" {
+resource "acloud_environment" "demo" {
   name         = "terraform-test"
   type         = "demo"
-  organisation = "demo"
+  organisation = var.organisation_slug
   description  = "terraform test"
 }
 
 resource "acloud_cluster" "demo_cluster" {
   name                   = "tf-demo-cluster"
-  organisation_slug      = acloud_environment.demo_terraform-test.organisation
-  environment_slug       = acloud_environment.demo_terraform-test.slug
+  organisation_slug      = var.organisation_slug
+  environment_slug       = acloud_environment.demo.slug
   version                = "v1.26.9-u-ame.3"
   region                 = "eu-west-1"
-  cloud_account_identity = data.acloud_cloud_account.demo_aws-cloud-account.identity
+  cloud_account_identity = data.acloud_cloud_account.demo.identity
 }
 
-resource "acloud_nodepool" "demo-update" {
-  organisation_slug = acloud_environment.demo_terraform-test.organisation
-  environment_slug  = acloud_environment.demo_terraform-test.slug
+resource "acloud_nodepool" "workers" {
+  organisation_slug = var.organisation_slug
+  environment_slug  = acloud_environment.demo.slug
   cluster_slug      = acloud_cluster.demo_cluster.slug
-  name              = "workers1"
+  name              = "workers"
   node_size         = "t3.small"
   min_size          = 1
   max_size          = 1
   annotations       = {
     "myannotation" = "test"
-
   }
+  
   labels = {
     "role" = "worker"
   }
-
-  taints {
-    key    = "mytaint"
-    value  = "true"
-    effect = "NoExecute"
-  }
-
-  taints {
-    key    = "mysecondtaint"
-    value  = "true"
-    effect = "NoSchedule"
-  }
-
 }
 
-output "identity" {
-  value = data.acloud_cloud_account.demo_aws-cloud-account.identity
+output "cloud_account_identity" {
+  value = data.acloud_cloud_account.demo.identity
 }
