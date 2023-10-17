@@ -5,6 +5,8 @@ github.com/apparentlymart/go-textseg/v13 v13.0.0 h1:Y+KvPE1NYz0xl601PVImeQfFyEy6
 github.com/apparentlymart/go-textseg/v13 v13.0.0/go.mod h1:ZK2fH7c4NqDTLtiYLvIkEghdlcqw7yxLeM89kiTRPUo=
 github.com/avisi-cloud/go-client v0.1.1 h1:9W3Ujl6/kW0Ka4GXuM3LiXsoSzDMg3C3Eqo2W0rJF0U=
 github.com/avisi-cloud/go-client v0.1.1/go.mod h1:scsRDen1uE9usIfareBJqSMEmgfea3Ve/byhpIleavQ=
+github.com/avisi-cloud/go-client v0.2.0 h1:qsv5f70TPZn3KzNMfcOXLqSspG+Y1wSHDZ+clWlfvPI=
+github.com/avisi-cloud/go-client v0.2.0/go.mod h1:scsRDen1uE9usIfareBJqSMEmgfea3Ve/byhpIleavQ=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
