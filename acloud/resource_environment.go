@@ -77,7 +77,7 @@ func resourceEnvironmentCreate(ctx context.Context, d *schema.ResourceData, m in
 		d.Set("slug", environment.Slug)
 		return diags
 	}
-	return diag.FromErr(fmt.Errorf("environment was not created"))
+	return resourceEnvironmentRead(ctx, d, m)
 }
 
 func resourceEnvironmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -91,10 +91,19 @@ func resourceEnvironmentRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if environment != nil {
-		return diags
+	if environment == nil {
+		return diag.FromErr(fmt.Errorf("environment was not found"))
 	}
-	return diag.FromErr(fmt.Errorf("environment was not found"))
+
+	d.SetId(strconv.Itoa(environment.ID))
+	d.Set("name", environment.Name)
+	d.Set("slug", environment.Slug)
+	d.Set("purpose", environment.Purpose)
+	d.Set("type", environment.Type)
+	d.Set("description", environment.Description)
+
+	return diags
+
 }
 
 func resourceEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -125,7 +134,7 @@ func resourceEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diags
 	}
 
-	return diags
+	return resourceEnvironmentRead(ctx, d, m)
 }
 
 func resourceEnvironmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -140,5 +149,8 @@ func resourceEnvironmentDelete(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	d.SetId("")
+
 	return diags
 }
