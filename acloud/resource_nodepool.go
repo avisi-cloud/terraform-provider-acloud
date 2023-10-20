@@ -127,7 +127,8 @@ func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m inter
 		return diags
 	}
 
-	return diag.FromErr(fmt.Errorf("nodepool was not created"))
+	return resourceNodepoolRead(ctx, d, m)
+
 }
 
 func castNodeTaints(taints []interface{}) []acloudapi.NodeTaint {
@@ -204,6 +205,18 @@ func resourceNodepoolRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(fmt.Errorf("nodepool was not found"))
 	}
 
+	nodePool := nodePools[idx]
+
+	d.SetId(strconv.Itoa(nodePool.ID))
+	d.Set("name", nodePool.Name)
+	d.Set("node_size", nodePool.NodeSize)
+	d.Set("auto_scaling", nodePool.AutoScaling)
+	d.Set("min_size", nodePool.MinSize)
+	d.Set("max_size", nodePool.MaxSize)
+	d.Set("annotations", nodePool.Annotations)
+	d.Set("labels", nodePool.Labels)
+	d.Set("taints", nodePool.Taints)
+
 	return diags
 }
 
@@ -243,7 +256,7 @@ func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		return diags
 	}
 
-	return diags
+	return resourceNodepoolRead(ctx, d, m)
 }
 
 func resourceNodepoolDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -262,6 +275,8 @@ func resourceNodepoolDelete(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	d.SetId("")
 
 	return diags
 }

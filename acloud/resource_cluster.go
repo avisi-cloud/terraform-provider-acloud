@@ -3,7 +3,6 @@ package acloud
 import (
 	"context"
 	"fmt"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -61,10 +60,6 @@ func resourceCluster() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			//"node_pools": {
-			//	Type:     schema.TypeList,
-			//	Optional: true,
-			//},
 		},
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -103,7 +98,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diags
 	}
 
-	return diag.FromErr(fmt.Errorf("cluster was not created"))
+	return resourceClusterRead(ctx, d, m)
 }
 
 func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -118,10 +113,20 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if cluster != nil {
-		return diags
+	if cluster == nil {
+		return diag.FromErr(fmt.Errorf("cluster was not found"))
 	}
-	return diag.FromErr(fmt.Errorf("cluster was not found"))
+
+	d.SetId(cluster.Identity)
+	d.Set("name", cluster.Name)
+	d.Set("description", cluster.Description)
+	d.Set("slug", cluster.Slug)
+	d.Set("cloud_provider", cluster.CloudProvider)
+	d.Set("region", cluster.Region)
+	d.Set("version", cluster.Version)
+	d.Set("update_channel", cluster.UpdateChannel)
+
+	return diags
 }
 
 func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -146,7 +151,7 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		return diags
 	}
 
-	return diags
+	return resourceClusterRead(ctx, d, m)
 }
 
 func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -165,6 +170,8 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	d.SetId("")
 
 	return diags
 }
