@@ -31,11 +31,12 @@ func Provider() *schema.Provider {
 			"acloud_nodepool":    resourceNodepool(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"acloud_organisation":         dataSourceOrganisations(),
-			"acloud_environment":          dataSourceEnvironment(),
-			"acloud_cloud_account":        dataSourceCloudAccount(),
-			"acloud_update_channel":       dataSourceUpdateChannel(),
-			"acloud_nodepool_join_config": dataSourceNodeJoinConfig(),
+			"acloud_organisation":                      dataSourceOrganisations(),
+			"acloud_environment":                       dataSourceEnvironment(),
+			"acloud_cloud_account":                     dataSourceCloudAccount(),
+			"acloud_update_channel":                    dataSourceUpdateChannel(),
+			"acloud_nodepool_join_config":              dataSourceNodeJoinConfig(),
+			"acloud_cloud_provider_availability_zones": dataSourceCloudProviderAvailabilityZones(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
