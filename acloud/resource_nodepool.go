@@ -69,7 +69,7 @@ func resourceNodepool() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"taints": &schema.Schema{
+			"taints": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
@@ -91,7 +91,7 @@ func resourceNodepool() *schema.Resource {
 			},
 		},
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 	}
 }

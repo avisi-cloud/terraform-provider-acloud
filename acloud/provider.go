@@ -31,10 +31,11 @@ func Provider() *schema.Provider {
 			"acloud_nodepool":    resourceNodepool(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"acloud_organisation":   dataSourceOrganisations(),
-			"acloud_environment":    dataSourceEnvironment(),
-			"acloud_cloud_account":  dataSourceCloudAccount(),
-			"acloud_update_channel": dataSourceUpdateChannel(),
+			"acloud_organisation":         dataSourceOrganisations(),
+			"acloud_environment":          dataSourceEnvironment(),
+			"acloud_cloud_account":        dataSourceCloudAccount(),
+			"acloud_update_channel":       dataSourceUpdateChannel(),
+			"acloud_nodepool_join_config": dataSourceNodeJoinConfig(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
@@ -43,18 +44,15 @@ func Provider() *schema.Provider {
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	token := d.Get("token").(string)
 	acloudApiEndpoint := d.Get("acloud_api").(string)
-	// Warning or errors can be collected in a slice type
 
 	authenticator := acloudapi.NewPersonalAccessTokenAuthenticator(token)
 	clientOpts := acloudapi.ClientOpts{
 		APIUrl: acloudApiEndpoint,
 	}
-	var diags diag.Diagnostics
-	c := acloudapi.NewClient(authenticator, clientOpts)
 
+	c := acloudapi.NewClient(authenticator, clientOpts)
 	if token != "" {
 		c.Resty().OnBeforeRequest(authenticator.Authenticate)
-		return c, diags
 	}
-	return c, diags
+	return c, nil
 }
