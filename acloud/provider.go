@@ -2,6 +2,7 @@ package acloud
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -30,9 +31,10 @@ func Provider() *schema.Provider {
 			"acloud_nodepool":    resourceNodepool(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"acloud_organisation":  dataSourceOrganisations(),
-			"acloud_environment":   dataSourceEnvironment(),
-			"acloud_cloud_account": dataSourceCloudAccount(),
+			"acloud_organisation":   dataSourceOrganisations(),
+			"acloud_environment":    dataSourceEnvironment(),
+			"acloud_cloud_account":  dataSourceCloudAccount(),
+			"acloud_update_channel": dataSourceUpdateChannel(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
