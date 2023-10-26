@@ -3,11 +3,19 @@ package acloud
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/avisi-cloud/go-client/pkg/acloudapi"
+)
+
+type ClusterState string
+
+const (
+	ClusterStateRunning ClusterState = "running"
+	ClusterStateStopped ClusterState = "stopped"
 )
 
 func resourceCluster() *schema.Resource {
@@ -61,6 +69,20 @@ func resourceCluster() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"status": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"stopped": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
+			"cluster_state_wait_seconds": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Default:  600,
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -92,10 +114,15 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	if cluster != nil {
 		d.SetId(cluster.Identity)
 		d.Set("slug", cluster.Slug)
 		d.Set("cloud_provider", cluster.CloudProvider)
+		err := WaitUntilClusterHasStatus(ctx, d, m, org, *cluster, string(ClusterStateRunning))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		return diags
 	}
 
@@ -126,21 +153,37 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 	d.Set("region", cluster.Region)
 	d.Set("version", cluster.Version)
 	d.Set("update_channel", cluster.UpdateChannel)
+	d.Set("status", cluster.Status)
 
 	return diags
 }
 
 func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	var diags diag.Diagnostics
+
+	diags := resourceClusterRead(ctx, d, m)
+	if diags != nil && diags.HasError() {
+		return diags
+	}
 
 	org := d.Get("organisation_slug").(string)
 	env := d.Get("environment_slug").(string)
 	slug := d.Get("slug").(string)
 
+	stopped := d.Get("stopped").(bool)
+	status := d.Get("status").(string)
+
 	updateCluster := acloudapi.UpdateCluster{
 		UpdateChannel: d.Get("update_channel").(string),
 		Version:       d.Get("version").(string),
+	}
+
+	desiredStatus := "running"
+	if stopped {
+		desiredStatus = "stopped"
+	}
+	if desiredStatus != status {
+		updateCluster.Status = getTransitionStatus(desiredStatus)
 	}
 
 	cluster, err := client.UpdateCluster(ctx, org, env, slug, updateCluster)
@@ -149,9 +192,11 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 	if cluster != nil {
-		return diags
+		err := WaitUntilClusterHasStatus(ctx, d, m, org, *cluster, desiredStatus)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
-
 	return resourceClusterRead(ctx, d, m)
 }
 
@@ -175,4 +220,55 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 	d.SetId("")
 
 	return diags
+}
+
+func getTransitionStatus(desiredStatus string) string {
+	if desiredStatus == string(ClusterStateRunning) {
+		return "starting"
+	} else if desiredStatus == string(ClusterStateStopped) {
+		return "stopping"
+	}
+	return desiredStatus
+}
+
+func WaitUntilClusterHasStatus(ctx context.Context, d *schema.ResourceData, m interface{}, org string, cluster acloudapi.Cluster, desiredStatus string) error {
+	client := m.(acloudapi.Client)
+
+	if cluster.Status == desiredStatus {
+		return nil
+	}
+
+	clusterStateWaitSeconds := d.Get("cluster_state_wait_seconds").(int)
+
+	return eventually(ctx, func(ctx context.Context) error {
+		c, err := client.GetCluster(ctx, org, cluster.EnvironmentSlug, cluster.Slug)
+		if err != nil {
+			return err
+		}
+
+		if c.Status != desiredStatus {
+			return fmt.Errorf("cluster has not reached status, current status: %s", c.Status)
+		}
+		return nil
+	}, time.Duration(clusterStateWaitSeconds)*time.Second)
+}
+
+func eventually(ctx context.Context, f func(ctx context.Context) error, timeout time.Duration) error {
+	withTimeout, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	for {
+		select {
+		case <-withTimeout.Done():
+			return withTimeout.Err()
+		case <-time.After(10 * time.Second):
+			err := f(withTimeout)
+			if err != nil {
+				// TODO: break on unrecoverable errors, such as 401's
+				continue
+			}
+			withTimeout.Done()
+			return nil
+		}
+	}
 }
