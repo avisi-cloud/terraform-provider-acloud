@@ -17,14 +17,14 @@ description: |-
 
 ### Required
 
-- `name` (String)
-- `organisation` (String)
-- `type` (String)
+- `name` (String) Name of the Environment
+- `organisation` (String) Slug of the Organisation
+- `type` (String) Type of the Environment. Available options: production, staging, development, demo, other
 
 ### Optional
 
-- `description` (String)
-- `purpose` (String)
+- `description` (String) A human readable description about the environment
+- `purpose` (String) Purpose of the Environment
 
 ### Read-Only
 

@@ -17,20 +17,20 @@ description: |-
 
 ### Required
 
-- `cluster_slug` (String)
-- `environment_slug` (String)
-- `max_size` (Number)
-- `min_size` (Number)
-- `name` (String)
-- `node_size` (String)
-- `organisation_slug` (String)
+- `cluster_slug` (String) Slug of the Cluster
+- `environment_slug` (String) Slug of the Environment
+- `max_size` (Number) Maximum amount of nodes in the Node Pool
+- `min_size` (Number) Minimum amount of nodes in the Node Pool
+- `name` (String) Name of the Node Pool
+- `node_size` (String) Type of machines in the Node Pool
+- `organisation_slug` (String) Slug of the Organisation
 
 ### Optional
 
-- `annotations` (Map of String)
-- `auto_scaling` (Boolean)
-- `labels` (Map of String)
-- `taints` (Block List) (see [below for nested schema](#nestedblock--taints))
+- `annotations` (Map of String) Annotations to put on the nodes in the Node Pool
+- `auto_scaling` (Boolean) Enables auto scaling of the Node Pool when set to true
+- `labels` (Map of String) Labels to put on the nodes in the Node Pool
+- `taints` (Block List) Taints to put on the nodes in the Node Pool (see [below for nested schema](#nestedblock--taints))
 
 ### Read-Only
 
