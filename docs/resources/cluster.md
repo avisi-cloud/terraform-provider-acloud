@@ -17,20 +17,23 @@ description: |-
 
 ### Required
 
-- `cloud_account_identity` (String)
-- `environment_slug` (String)
-- `name` (String)
-- `organisation_slug` (String)
-- `region` (String)
-- `version` (String)
+- `cloud_account_identity` (String) Identity of the Cloud Account used to deploy the Cluster
+- `environment_slug` (String) Slug of the Environment of the Cluster
+- `name` (String) Name of the Cluster
+- `organisation_slug` (String) Slug of the Organisation of the Cluster
+- `region` (String) Region of the Cloud Provider to deploy the Cluster in
+- `version` (String) Avisi Cloud Kubernetes version of the Cluster
 
 ### Optional
 
-- `description` (String)
-- `update_channel` (String)
+- `cluster_state_wait_seconds` (Number) Time-out for waiting until the cluster reaches the desired state
+- `description` (String) Description of the Cluster
+- `stopped` (Boolean) Stops the Cluster if set to true. False by default
+- `update_channel` (String) Avisi Cloud Kubernetes Update Channel that the Cluster follows
 
 ### Read-Only
 
 - `cloud_provider` (String)
 - `id` (String) The ID of this resource.
 - `slug` (String)
+- `status` (String)

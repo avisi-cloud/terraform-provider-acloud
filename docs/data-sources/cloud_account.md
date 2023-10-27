@@ -17,12 +17,12 @@ description: |-
 
 ### Required
 
-- `cloud_provider` (String)
-- `display_name` (String)
-- `organisation` (String)
+- `cloud_provider` (String) Slug of the Cloud Provider of the Cloud Account
+- `display_name` (String) Name of the Cloud Account
+- `organisation` (String) Slug of the Organisation
 
 ### Read-Only
 
-- `enabled` (Boolean)
+- `enabled` (Boolean) Returns if the Cloud Account is enabled
 - `id` (String) The ID of this resource.
 - `identity` (String)

@@ -23,28 +23,33 @@ func resourceEnvironment() *schema.Resource {
 				Computed: true,
 			},
 			"organisation": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Slug of the Organisation",
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the Environment",
 			},
 			"slug": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 			"purpose": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Purpose of the Environment",
 			},
 			"type": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Type of the Environment. Available options: production, staging, development, demo, other",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "A human readable description about the environment",
 			},
 		},
 		Importer: &schema.ResourceImporter{

@@ -24,54 +24,65 @@ func resourceNodepool() *schema.Resource {
 				Computed: true,
 			},
 			"organisation_slug": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Slug of the Organisation",
 			},
 			"environment_slug": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Slug of the Environment",
 			},
 			"cluster_slug": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Slug of the Cluster",
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the Node Pool",
 			},
 			"node_size": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Type of machines in the Node Pool",
 			},
 			"auto_scaling": {
-				Type:     schema.TypeBool,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Enables auto scaling of the Node Pool when set to true",
 			},
 			"min_size": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Minimum amount of nodes in the Node Pool",
 			},
 			"max_size": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Maximum amount of nodes in the Node Pool",
 			},
 			"annotations": {
-				Type:     schema.TypeMap,
-				Optional: true,
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Annotations to put on the nodes in the Node Pool",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 			},
 			"labels": {
-				Type:     schema.TypeMap,
-				Optional: true,
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Labels to put on the nodes in the Node Pool",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 			},
 			"taints": {
-				Type:     schema.TypeList,
-				Optional: true,
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Taints to put on the nodes in the Node Pool",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"key": {

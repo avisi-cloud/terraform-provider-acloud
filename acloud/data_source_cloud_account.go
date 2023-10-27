@@ -23,20 +23,24 @@ func dataSourceCloudAccount() *schema.Resource {
 				Computed: true,
 			},
 			"display_name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the Cloud Account",
 			},
 			"organisation": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Slug of the Organisation",
 			},
 			"cloud_provider": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Slug of the Cloud Provider of the Cloud Account",
 			},
 			"enabled": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Returns if the Cloud Account is enabled",
 			},
 		},
 	}
