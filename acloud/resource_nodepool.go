@@ -14,6 +14,7 @@ import (
 
 func resourceNodepool() *schema.Resource {
 	return &schema.Resource{
+		Description:   "Create a node pool for a cluster",
 		CreateContext: resourceNodepoolCreate,
 		ReadContext:   resourceNodepoolRead,
 		UpdateContext: resourceNodepoolUpdate,
@@ -51,6 +52,7 @@ func resourceNodepool() *schema.Resource {
 			"auto_scaling": {
 				Type:        schema.TypeBool,
 				Optional:    true,
+				Default:     false,
 				Description: "Enables auto scaling of the Node Pool when set to true",
 			},
 			"min_size": {
@@ -62,6 +64,11 @@ func resourceNodepool() *schema.Resource {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "Maximum amount of nodes in the Node Pool",
+			},
+			"node_auto_replacement": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
@@ -118,13 +125,14 @@ func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	createNodepool := acloudapi.CreateNodePool{
-		Name:        d.Get("name").(string),
-		NodeSize:    d.Get("node_size").(string),
-		MinSize:     d.Get("min_size").(int),
-		MaxSize:     d.Get("max_size").(int),
-		Annotations: castInterfaceMap(d.Get("annotations").(map[string]interface{})),
-		Labels:      castInterfaceMap(d.Get("labels").(map[string]interface{})),
-		Taints:      castNodeTaints(d.Get("taints").([]interface{})),
+		Name:                d.Get("name").(string),
+		NodeSize:            d.Get("node_size").(string),
+		MinSize:             d.Get("min_size").(int),
+		MaxSize:             d.Get("max_size").(int),
+		Annotations:         castInterfaceMap(d.Get("annotations").(map[string]interface{})),
+		Labels:              castInterfaceMap(d.Get("labels").(map[string]interface{})),
+		Taints:              castNodeTaints(d.Get("taints").([]interface{})),
+		NodeAutoReplacement: d.Get("node_auto_replacement").(bool),
 	}
 
 	nodePool, err := client.CreateNodePool(ctx, *cluster, createNodepool)

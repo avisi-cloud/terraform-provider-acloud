@@ -13,6 +13,7 @@ import (
 
 func resourceEnvironment() *schema.Resource {
 	return &schema.Resource{
+		Description:   "Create an environment",
 		CreateContext: resourceEnvironmentCreate,
 		ReadContext:   resourceEnvironmentRead,
 		UpdateContext: resourceEnvironmentUpdate,

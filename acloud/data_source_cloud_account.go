@@ -12,6 +12,7 @@ import (
 
 func dataSourceCloudAccount() *schema.Resource {
 	return &schema.Resource{
+		Description: "Get a cloud account",
 		ReadContext: dataCloudAccountRead,
 		Schema: map[string]*schema.Schema{
 			"id": {

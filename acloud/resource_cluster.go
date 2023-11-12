@@ -20,6 +20,7 @@ const (
 
 func resourceCluster() *schema.Resource {
 	return &schema.Resource{
+		Description:   "Create an Avisi Cloud Kubernetes cluster within an environment",
 		CreateContext: resourceClusterCreate,
 		ReadContext:   resourceClusterRead,
 		UpdateContext: resourceClusterUpdate,

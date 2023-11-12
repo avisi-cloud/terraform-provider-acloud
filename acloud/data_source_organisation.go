@@ -12,6 +12,7 @@ import (
 
 func dataSourceOrganisations() *schema.Resource {
 	return &schema.Resource{
+		Description: "Get an organisation",
 		ReadContext: dataSourceOrganisationsRead,
 		Schema: map[string]*schema.Schema{
 			"id": {

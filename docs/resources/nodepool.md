@@ -3,12 +3,12 @@
 page_title: "acloud_nodepool Resource - terraform-provider-acloud"
 subcategory: ""
 description: |-
-  
+  Create a node pool for a cluster
 ---
 
 # acloud_nodepool (Resource)
 
-
+Create a node pool for a cluster
 
 
 
@@ -30,6 +30,7 @@ description: |-
 - `annotations` (Map of String) Annotations to put on the nodes in the Node Pool
 - `auto_scaling` (Boolean) Enables auto scaling of the Node Pool when set to true
 - `labels` (Map of String) Labels to put on the nodes in the Node Pool
+- `node_auto_replacement` (Boolean)
 - `taints` (Block List) Taints to put on the nodes in the Node Pool (see [below for nested schema](#nestedblock--taints))
 
 ### Read-Only

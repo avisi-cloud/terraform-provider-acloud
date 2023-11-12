@@ -2,7 +2,6 @@ package acloud
 
 import (
 	"context"
-	"crypto/sha1"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -13,6 +12,7 @@ import (
 
 func dataSourceCloudProviderAvailabilityZones() *schema.Resource {
 	return &schema.Resource{
+		Description: "List all availablility zones for a given cloud region",
 		ReadContext: dataSourceCloudProviderAvailabilityZonesRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -23,7 +23,7 @@ func dataSourceCloudProviderAvailabilityZones() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"cloud_provider": {
+			"cloud_provider_slug": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -48,7 +48,7 @@ func dataSourceCloudProviderAvailabilityZonesRead(ctx context.Context, d *schema
 	client := m.(acloudapi.Client)
 
 	organisationSlug := d.Get("organisation_slug").(string)
-	cloudProviderSlug := d.Get("cloud_provider").(string)
+	cloudProviderSlug := d.Get("cloud_provider_slug").(string)
 	regionSlug := d.Get("region").(string)
 
 	availabilityZones, err := client.GetAvailabilityZones(ctx, organisationSlug, cloudProviderSlug, regionSlug)
@@ -64,9 +64,4 @@ func dataSourceCloudProviderAvailabilityZonesRead(ctx context.Context, d *schema
 	}
 	d.Set("availability_zones", zones)
 	return diags
-}
-
-func setAsID(d *schema.ResourceData, customID string) {
-	computedId := sha1.Sum([]byte(customID))
-	d.SetId(fmt.Sprintf("%x", computedId))
 }

@@ -3,12 +3,12 @@
 page_title: "acloud_environment Data Source - terraform-provider-acloud"
 subcategory: ""
 description: |-
-  
+  Get an environment
 ---
 
 # acloud_environment (Data Source)
 
-
+Get an environment
 
 
 
@@ -17,10 +17,10 @@ description: |-
 
 ### Required
 
-- `organisation` (String)
-- `slug` (String)
+- `organisation` (String) Slug of the organisation
+- `slug` (String) Slug of the environment
 
 ### Read-Only
 
 - `id` (Number) The ID of this resource.
-- `name` (String)
+- `name` (String) Name of the environment

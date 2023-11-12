@@ -12,6 +12,7 @@ import (
 
 func dataSourceUpdateChannel() *schema.Resource {
 	return &schema.Resource{
+		Description: "Get a Kubernetes update channel, including current Avisi Cloud Kubernetes version",
 		ReadContext: dataSourceUpdateChannelRead,
 		Schema: map[string]*schema.Schema{
 			"organisation": {
