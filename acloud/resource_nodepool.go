@@ -44,26 +44,39 @@ func resourceNodepool() *schema.Resource {
 				Required:    true,
 				Description: "Name of the Node Pool",
 			},
+			"availability_zone": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Availability Zone in which the nodes will be provisioned",
+			},
 			"node_size": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Type of machines in the Node Pool",
 			},
+			"node_count": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     1,
+				Description: "Number of nodes in the Node Pool. Used when auto_scaling is set to `false`.",
+			},
 			"auto_scaling": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "Enables auto scaling of the Node Pool when set to true",
+				Description: "Enables auto scaling of the Node Pool when set to `true`",
 			},
 			"min_size": {
 				Type:        schema.TypeInt,
-				Required:    true,
-				Description: "Minimum amount of nodes in the Node Pool",
+				Optional:    true,
+				Default:     1,
+				Description: "Minimum amount of nodes in the Node Pool. Used when auto_scaling is set to `true`.",
 			},
 			"max_size": {
 				Type:        schema.TypeInt,
-				Required:    true,
-				Description: "Maximum amount of nodes in the Node Pool",
+				Optional:    true,
+				Default:     1,
+				Description: "Maximum amount of nodes in the Node Pool. Used when auto_scaling is set to `true`.",
 			},
 			"node_auto_replacement": {
 				Type:     schema.TypeBool,
@@ -124,11 +137,24 @@ func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(fmt.Errorf("cluster was not found"))
 	}
 
+	nodeCount := d.Get("node_count").(int)
+	minNodePoolCount := d.Get("min_size").(int)
+	maxNodePoolCount := d.Get("max_size").(int)
+
+	autoScaling := d.Get("auto_scaling").(bool)
+	if !autoScaling {
+		minNodePoolCount = nodeCount
+		maxNodePoolCount = nodeCount
+	}
+
 	createNodepool := acloudapi.CreateNodePool{
-		Name:                d.Get("name").(string),
-		NodeSize:            d.Get("node_size").(string),
-		MinSize:             d.Get("min_size").(int),
-		MaxSize:             d.Get("max_size").(int),
+		Name:     d.Get("name").(string),
+		NodeSize: d.Get("node_size").(string),
+		// TODO: not yet supported by the API
+		// NodeCount: nodeCount,
+		MinSize:             minNodePoolCount,
+		MaxSize:             maxNodePoolCount,
+		AvailabilityZone:    d.Get("availability_zone").(string),
 		Annotations:         castInterfaceMap(d.Get("annotations").(map[string]interface{})),
 		Labels:              castInterfaceMap(d.Get("labels").(map[string]interface{})),
 		Taints:              castNodeTaints(d.Get("taints").([]interface{})),
@@ -200,7 +226,6 @@ func getCluster(ctx context.Context, d *schema.ResourceData, m interface{}) *acl
 
 func resourceNodepoolRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	var diags diag.Diagnostics
 
 	cluster := getCluster(ctx, d, m)
 
@@ -230,13 +255,14 @@ func resourceNodepoolRead(ctx context.Context, d *schema.ResourceData, m interfa
 	d.Set("name", nodePool.Name)
 	d.Set("node_size", nodePool.NodeSize)
 	d.Set("auto_scaling", nodePool.AutoScaling)
+	d.Set("availability_zone", nodePool.AvailabilityZone)
+	d.Set("node_auto_replacement", nodePool.NodeAutoReplacement)
 	d.Set("min_size", nodePool.MinSize)
 	d.Set("max_size", nodePool.MaxSize)
 	d.Set("annotations", nodePool.Annotations)
 	d.Set("labels", nodePool.Labels)
 	d.Set("taints", nodePool.Taints)
-
-	return diags
+	return nil
 }
 
 func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
