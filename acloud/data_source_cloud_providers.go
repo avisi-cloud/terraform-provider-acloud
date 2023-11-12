@@ -18,7 +18,7 @@ func dataSourceCloudProviders() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation_slug": {
+			"organisation": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -49,7 +49,7 @@ func dataSourceCloudProviders() *schema.Resource {
 func dataSourceCloudProvidersRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
 
-	organisationSlug := d.Get("organisation_slug").(string)
+	organisationSlug := d.Get("organisation").(string)
 
 	cloudProviders, err := client.GetCloudProviders(ctx, organisationSlug)
 	if err != nil {

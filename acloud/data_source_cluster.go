@@ -22,12 +22,12 @@ func dataSourceCluster() *schema.Resource {
 				Computed:    true,
 				Description: "Name of the Cluster",
 			},
-			"organisation_slug": {
+			"organisation": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the Organisation of the Cluster",
 			},
-			"environment_slug": {
+			"environment": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the Environment of the Cluster",
@@ -83,8 +83,8 @@ func dataClusterRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	client := m.(acloudapi.Client)
 	var diags diag.Diagnostics
 
-	org := d.Get("organisation_slug").(string)
-	env := d.Get("environment_slug").(string)
+	org := d.Get("organisation").(string)
+	env := d.Get("environment").(string)
 	slug := d.Get("slug").(string)
 
 	cluster, err := client.GetCluster(ctx, org, env, slug)

@@ -24,6 +24,7 @@ Create an environment
 ### Optional
 
 - `description` (String) A human readable description about the environment
+- `organisation_slug` (String, Deprecated)
 - `purpose` (String) Purpose of the Environment
 
 ### Read-Only

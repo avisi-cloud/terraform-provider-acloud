@@ -19,11 +19,11 @@ func dataSourceCloudProviderAvailabilityZones() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation_slug": {
+			"organisation": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"cloud_provider_slug": {
+			"cloud_provider": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -47,8 +47,8 @@ func dataSourceCloudProviderAvailabilityZonesRead(ctx context.Context, d *schema
 
 	client := m.(acloudapi.Client)
 
-	organisationSlug := d.Get("organisation_slug").(string)
-	cloudProviderSlug := d.Get("cloud_provider_slug").(string)
+	organisationSlug := d.Get("organisation").(string)
+	cloudProviderSlug := d.Get("cloud_provider").(string)
 	regionSlug := d.Get("region").(string)
 
 	availabilityZones, err := client.GetAvailabilityZones(ctx, organisationSlug, cloudProviderSlug, regionSlug)

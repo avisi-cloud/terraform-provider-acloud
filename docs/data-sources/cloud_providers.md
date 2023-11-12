@@ -17,7 +17,7 @@ List all Cloud Providers
 
 ### Required
 
-- `organisation_slug` (String)
+- `organisation` (String)
 
 ### Read-Only
 

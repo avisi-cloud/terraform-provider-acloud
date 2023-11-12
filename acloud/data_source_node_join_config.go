@@ -23,17 +23,17 @@ This datasource only works for Bring Your Own Node clusters.
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			"organisation_slug": {
+			"organisation": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the Organisation",
 			},
-			"environment_slug": {
+			"environment": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the environment of the cluster",
 			},
-			"cluster_slug": {
+			"cluster": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the cluster",
@@ -73,9 +73,9 @@ This datasource only works for Bring Your Own Node clusters.
 func dataSourceNodeJoinConfigRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
 
-	organisationSlug := d.Get("organisation_slug").(string)
-	environmentSlug := d.Get("environment_slug").(string)
-	clusterSlug := d.Get("cluster_slug").(string)
+	organisationSlug := d.Get("organisation").(string)
+	environmentSlug := d.Get("environment").(string)
+	clusterSlug := d.Get("cluster").(string)
 
 	cluster, err := client.GetCluster(ctx, organisationSlug, environmentSlug, clusterSlug)
 	if err != nil {

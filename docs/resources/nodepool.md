@@ -17,22 +17,25 @@ Create a node pool for a cluster
 
 ### Required
 
-- `cluster_slug` (String) Slug of the Cluster
-- `environment_slug` (String) Slug of the Environment
+- `cluster` (String) Slug of the Cluster
+- `environment` (String) Slug of the Environment
 - `name` (String) Name of the Node Pool
 - `node_size` (String) Type of machines in the Node Pool
-- `organisation_slug` (String) Slug of the Organisation
+- `organisation` (String) Slug of the Organisation
 
 ### Optional
 
 - `annotations` (Map of String) Annotations to put on the nodes in the Node Pool
 - `auto_scaling` (Boolean) Enables auto scaling of the Node Pool when set to `true`
 - `availability_zone` (String) Availability Zone in which the nodes will be provisioned
+- `cluster_slug` (String, Deprecated)
+- `environment_slug` (String, Deprecated)
 - `labels` (Map of String) Labels to put on the nodes in the Node Pool
 - `max_size` (Number) Maximum amount of nodes in the Node Pool. Used when auto_scaling is set to `true`.
 - `min_size` (Number) Minimum amount of nodes in the Node Pool. Used when auto_scaling is set to `true`.
 - `node_auto_replacement` (Boolean)
 - `node_count` (Number) Number of nodes in the Node Pool. Used when auto_scaling is set to `false`.
+- `organisation_slug` (String, Deprecated)
 - `taints` (Block List) Taints to put on the nodes in the Node Pool (see [below for nested schema](#nestedblock--taints))
 
 ### Read-Only

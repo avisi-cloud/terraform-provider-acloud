@@ -35,15 +35,27 @@ func resourceCluster() *schema.Resource {
 				Required:    true,
 				Description: "Name of the Cluster",
 			},
-			"organisation_slug": {
+			"organisation": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the Organisation of the Cluster",
 			},
-			"environment_slug": {
+			"environment": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the Environment of the Cluster",
+			},
+			"organisation_slug": {
+				Type:       schema.TypeString,
+				Deprecated: "replaced by organisation",
+				Optional:   true,
+				Default:    nil,
+			},
+			"environment_slug": {
+				Type:       schema.TypeString,
+				Deprecated: "replaced by environment",
+				Optional:   true,
+				Default:    nil,
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -103,9 +115,6 @@ func resourceCluster() *schema.Resource {
 
 func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-
-	var diags diag.Diagnostics
-
 	nodePools := []acloudapi.NodePools{}
 
 	createCluster := acloudapi.CreateCluster{
@@ -117,8 +126,8 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		NodePools:            nodePools,
 	}
 
-	org := d.Get("organisation_slug").(string)
-	env := d.Get("environment_slug").(string)
+	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
+	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
 
 	cluster, err := client.CreateCluster(ctx, org, env, createCluster)
 
@@ -134,23 +143,33 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		return diags
+		return nil
 	}
 
 	return resourceClusterRead(ctx, d, m)
 }
 
+func getStringAttributeWithLegacyName(d *schema.ResourceData, names ...string) string {
+	defaultValue := ""
+	for _, attributeName := range names {
+		value := d.Get(attributeName)
+		if value != nil && value != "" {
+			defaultValue = value.(string)
+		}
+	}
+	return defaultValue
+}
+
 func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	var diags diag.Diagnostics
+	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
+	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
 
-	org := d.Get("organisation_slug").(string)
-	env := d.Get("environment_slug").(string)
 	slug := d.Get("slug").(string)
 
 	cluster, err := client.GetCluster(ctx, org, env, slug)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to find cluster in org %s and env %s: %w", org, env, err))
 	}
 	if cluster == nil {
 		return diag.FromErr(fmt.Errorf("cluster was not found"))
@@ -166,7 +185,7 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 	d.Set("update_channel", cluster.UpdateChannel)
 	d.Set("status", cluster.Status)
 
-	return diags
+	return nil
 }
 
 func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -177,8 +196,8 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		return diags
 	}
 
-	org := d.Get("organisation_slug").(string)
-	env := d.Get("environment_slug").(string)
+	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
+	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
 	slug := d.Get("slug").(string)
 
 	stopped := d.Get("stopped").(bool)
@@ -215,8 +234,8 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 	client := m.(acloudapi.Client)
 	var diags diag.Diagnostics
 
-	org := d.Get("organisation_slug").(string)
-	env := d.Get("environment_slug").(string)
+	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
+	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
 	slug := d.Get("slug").(string)
 
 	updateCluster := acloudapi.UpdateCluster{

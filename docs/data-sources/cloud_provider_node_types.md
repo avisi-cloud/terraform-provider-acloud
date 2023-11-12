@@ -17,7 +17,7 @@ List all Node types available on the given cloud provider
 
 ### Required
 
-- `cloud_provider_slug` (String)
+- `cloud_provider` (String)
 
 ### Read-Only
 

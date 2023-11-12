@@ -18,9 +18,9 @@ Create an Avisi Cloud Kubernetes cluster within an environment
 ### Required
 
 - `cloud_account_identity` (String) Identity of the Cloud Account used to deploy the Cluster
-- `environment_slug` (String) Slug of the Environment of the Cluster
+- `environment` (String) Slug of the Environment of the Cluster
 - `name` (String) Name of the Cluster
-- `organisation_slug` (String) Slug of the Organisation of the Cluster
+- `organisation` (String) Slug of the Organisation of the Cluster
 - `region` (String) Region of the Cloud Provider to deploy the Cluster in
 - `version` (String) Avisi Cloud Kubernetes version of the Cluster
 
@@ -28,6 +28,8 @@ Create an Avisi Cloud Kubernetes cluster within an environment
 
 - `cluster_state_wait_seconds` (Number) Time-out for waiting until the cluster reaches the desired state
 - `description` (String) Description of the Cluster
+- `environment_slug` (String, Deprecated)
+- `organisation_slug` (String, Deprecated)
 - `stopped` (Boolean) Stops the Cluster if set to true. False by default
 - `update_channel` (String) Avisi Cloud Kubernetes Update Channel that the Cluster follows
 

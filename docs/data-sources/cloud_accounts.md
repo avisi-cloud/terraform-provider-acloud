@@ -17,12 +17,12 @@ List all cloud accounts within an organisation
 
 ### Required
 
-- `organisation_slug` (String) Organisation Slug
+- `organisation` (String) Organisation Slug
 
 ### Optional
 
 - `cloud_account_name` (String) Cloud Account Name
-- `cloud_provider_slug` (String) Cloud Provider Slug
+- `cloud_provider` (String) Cloud Provider Slug
 
 ### Read-Only
 

@@ -19,11 +19,11 @@ func dataSourceCloudProviderRegions() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation_slug": {
+			"organisation": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"cloud_provider_slug": {
+			"cloud_provider": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -57,8 +57,8 @@ func dataSourceCloudProviderRegions() *schema.Resource {
 func dataSourceCloudProviderRegionsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
 
-	organisationSlug := d.Get("organisation_slug").(string)
-	cloudProviderSlug := d.Get("cloud_provider_slug").(string)
+	organisationSlug := d.Get("organisation").(string)
+	cloudProviderSlug := d.Get("cloud_provider").(string)
 
 	regions, err := client.GetRegions(ctx, organisationSlug, cloudProviderSlug)
 	if err != nil {

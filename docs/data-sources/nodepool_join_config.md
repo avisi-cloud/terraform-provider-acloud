@@ -22,10 +22,10 @@ This datasource only works for Bring Your Own Node clusters.
 
 ### Required
 
-- `cluster_slug` (String) Slug of the cluster
-- `environment_slug` (String) Slug of the environment of the cluster
+- `cluster` (String) Slug of the cluster
+- `environment` (String) Slug of the environment of the cluster
 - `node_pool_id` (String) ID of the node pool
-- `organisation_slug` (String) Slug of the Organisation
+- `organisation` (String) Slug of the Organisation
 
 ### Read-Only
 

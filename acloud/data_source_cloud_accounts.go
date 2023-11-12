@@ -18,12 +18,12 @@ func dataSourceCloudAccounts() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation_slug": {
+			"organisation": {
 				Type:        schema.TypeString,
 				Description: "Organisation Slug",
 				Required:    true,
 			},
-			"cloud_provider_slug": {
+			"cloud_provider": {
 				Type:        schema.TypeString,
 				Description: "Cloud Provider Slug",
 				Optional:    true,
@@ -61,8 +61,8 @@ func dataSourceCloudAccounts() *schema.Resource {
 func dataSourceCloudAccountsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
 
-	organisationSlug := d.Get("organisation_slug").(string)
-	providerFilter := d.Get("cloud_provider_slug").(string)
+	organisationSlug := d.Get("organisation").(string)
+	providerFilter := d.Get("cloud_provider").(string)
 	accountNameFilter := d.Get("cloud_account_name").(string)
 
 	cloudAccounts, err := client.GetCloudAccounts(ctx, organisationSlug)

@@ -24,20 +24,38 @@ func resourceNodepool() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation_slug": {
+			"organisation": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the Organisation",
 			},
-			"environment_slug": {
+			"environment": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the Environment",
 			},
-			"cluster_slug": {
+			"cluster": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the Cluster",
+			},
+			"organisation_slug": {
+				Type:       schema.TypeString,
+				Deprecated: "replaced by organisation",
+				Optional:   true,
+				Default:    nil,
+			},
+			"environment_slug": {
+				Type:       schema.TypeString,
+				Deprecated: "replaced by environment",
+				Optional:   true,
+				Default:    nil,
+			},
+			"cluster_slug": {
+				Type:       schema.TypeString,
+				Deprecated: "replaced by cluster",
+				Optional:   true,
+				Default:    nil,
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -211,9 +229,9 @@ func castInterfaceMap(original map[string]interface{}) map[string]string {
 func getCluster(ctx context.Context, d *schema.ResourceData, m interface{}) *acloudapi.Cluster {
 	client := m.(acloudapi.Client)
 
-	org := d.Get("organisation_slug").(string)
-	env := d.Get("environment_slug").(string)
-	cls := d.Get("cluster_slug").(string)
+	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
+	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
+	cls := getStringAttributeWithLegacyName(d, "cluster", "cluster_slug")
 
 	cluster, _ := client.GetCluster(ctx, org, env, cls)
 
