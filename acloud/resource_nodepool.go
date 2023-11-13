@@ -27,17 +27,20 @@ func resourceNodepool() *schema.Resource {
 			"organisation": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Slug of the Organisation",
+				ForceNew:    true,
+				Description: "Slug of the Organisation. Can only be set on creation.",
 			},
 			"environment": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Slug of the Environment",
+				ForceNew:    true,
+				Description: "Slug of the Environment. Can only be set on creation.",
 			},
 			"cluster": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Slug of the Cluster",
+				ForceNew:    true,
+				Description: "Slug of the Cluster. Can only be set on creation.",
 			},
 			"organisation_slug": {
 				Type:       schema.TypeString,
@@ -65,7 +68,8 @@ func resourceNodepool() *schema.Resource {
 			"availability_zone": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Availability Zone in which the nodes will be provisioned",
+				ForceNew:    true,
+				Description: "Availability Zone in which the nodes will be provisioned. Can only be set on creation.",
 			},
 			"node_size": {
 				Type:        schema.TypeString,

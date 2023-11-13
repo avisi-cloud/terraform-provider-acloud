@@ -18,7 +18,7 @@ Create an environment
 ### Required
 
 - `name` (String) Name of the Environment
-- `organisation` (String) Slug of the Organisation
+- `organisation` (String) Slug of the Organisation. Can only be set on creation.
 - `type` (String) Type of the Environment. Available options: production, staging, development, demo, other
 
 ### Optional
