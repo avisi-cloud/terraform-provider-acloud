@@ -13,6 +13,7 @@ import (
 
 func resourceEnvironment() *schema.Resource {
 	return &schema.Resource{
+		Description:   "Create an environment",
 		CreateContext: resourceEnvironmentCreate,
 		ReadContext:   resourceEnvironmentRead,
 		UpdateContext: resourceEnvironmentUpdate,
@@ -26,6 +27,12 @@ func resourceEnvironment() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the Organisation",
+			},
+			"organisation_slug": {
+				Type:       schema.TypeString,
+				Deprecated: "replaced by organisation",
+				Optional:   true,
+				Default:    nil,
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -60,8 +67,6 @@ func resourceEnvironment() *schema.Resource {
 
 func resourceEnvironmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
 
 	createEnvironment := acloudapi.CreateEnvironment{
 		Name:        d.Get("name").(string),
@@ -70,7 +75,7 @@ func resourceEnvironmentCreate(ctx context.Context, d *schema.ResourceData, m in
 		Description: d.Get("description").(string),
 	}
 
-	org := d.Get("organisation").(string)
+	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 
 	environment, err := client.CreateEnvironment(ctx, createEnvironment, org)
 
@@ -80,19 +85,17 @@ func resourceEnvironmentCreate(ctx context.Context, d *schema.ResourceData, m in
 	if environment != nil {
 		d.SetId(strconv.Itoa(environment.ID))
 		d.Set("slug", environment.Slug)
-		return diags
+		return nil
 	}
 	return resourceEnvironmentRead(ctx, d, m)
 }
 
 func resourceEnvironmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
 
-	orgSlug := d.Get("organisation").(string)
+	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 	slug := d.Get("slug").(string)
-	environment, err := client.GetEnvironment(ctx, orgSlug, slug)
+	environment, err := client.GetEnvironment(ctx, org, slug)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -107,15 +110,11 @@ func resourceEnvironmentRead(ctx context.Context, d *schema.ResourceData, m inte
 	d.Set("type", environment.Type)
 	d.Set("description", environment.Description)
 
-	return diags
-
+	return nil
 }
 
 func resourceEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
 	updateEnvironment := acloudapi.UpdateEnvironment{
 		Name:        d.Get("name").(string),
 		Purpose:     d.Get("purpose").(string),
@@ -123,7 +122,7 @@ func resourceEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, m in
 		Description: d.Get("description").(string),
 	}
 
-	org := d.Get("organisation").(string)
+	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 	env := d.Get("slug").(string)
 
 	environment, err := client.UpdateEnvironment(ctx, updateEnvironment, org, env)
@@ -136,7 +135,7 @@ func resourceEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, m in
 		d.Set("type", environment.Type)
 		d.Set("description", environment.Description)
 		d.Set("slug", environment.Slug)
-		return diags
+		return nil
 	}
 
 	return resourceEnvironmentRead(ctx, d, m)
@@ -144,18 +143,15 @@ func resourceEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceEnvironmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
-	orgSlug := d.Get("organisation").(string)
+	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 	slug := d.Get("slug").(string)
 
-	err := client.DeleteEnvironment(ctx, orgSlug, slug)
+	err := client.DeleteEnvironment(ctx, org, slug)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId("")
 
-	return diags
+	return nil
 }

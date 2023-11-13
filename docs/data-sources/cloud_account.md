@@ -3,12 +3,12 @@
 page_title: "acloud_cloud_account Data Source - terraform-provider-acloud"
 subcategory: ""
 description: |-
-  
+  Get a cloud account
 ---
 
 # acloud_cloud_account (Data Source)
 
-
+Get a cloud account
 
 
 

@@ -3,12 +3,12 @@
 page_title: "acloud_environment Resource - terraform-provider-acloud"
 subcategory: ""
 description: |-
-  
+  Create an environment
 ---
 
 # acloud_environment (Resource)
 
-
+Create an environment
 
 
 
@@ -24,6 +24,7 @@ description: |-
 ### Optional
 
 - `description` (String) A human readable description about the environment
+- `organisation_slug` (String, Deprecated)
 - `purpose` (String) Purpose of the Environment
 
 ### Read-Only

@@ -12,6 +12,7 @@ import (
 
 func dataSourceUpdateChannel() *schema.Resource {
 	return &schema.Resource{
+		Description: "Get a Kubernetes update channel, including current Avisi Cloud Kubernetes version",
 		ReadContext: dataSourceUpdateChannelRead,
 		Schema: map[string]*schema.Schema{
 			"organisation": {
@@ -44,7 +45,7 @@ func dataSourceUpdateChannelRead(ctx context.Context, d *schema.ResourceData, m 
 	channelName := d.Get("name").(string)
 	updateChannels, err := client.GetUpdateChannels(ctx, orgSlug)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to get update channel: %w", err))
 	}
 
 	for _, updateChannel := range updateChannels {

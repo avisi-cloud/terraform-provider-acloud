@@ -3,12 +3,12 @@
 page_title: "acloud_update_channel Data Source - terraform-provider-acloud"
 subcategory: ""
 description: |-
-  
+  Get a Kubernetes update channel, including current Avisi Cloud Kubernetes version
 ---
 
 # acloud_update_channel (Data Source)
 
-
+Get a Kubernetes update channel, including current Avisi Cloud Kubernetes version
 
 
 

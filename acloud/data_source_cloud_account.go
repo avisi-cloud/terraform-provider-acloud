@@ -12,6 +12,7 @@ import (
 
 func dataSourceCloudAccount() *schema.Resource {
 	return &schema.Resource{
+		Description: "Get a cloud account",
 		ReadContext: dataCloudAccountRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -48,22 +49,16 @@ func dataSourceCloudAccount() *schema.Resource {
 
 func dataCloudAccountRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
 	org := d.Get("organisation").(string)
 	displayName := d.Get("display_name").(string)
 	cloudProvider := d.Get("cloud_provider").(string)
 
 	cloudAccount, err := client.FindCloudAccountByName(ctx, org, displayName, cloudProvider)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to get cloud account: %w", err))
 	}
-	if cloudAccount != nil {
-		d.SetId(cloudAccount.Identity)
-		d.Set("identity", cloudAccount.Identity)
-		d.Set("enabled", cloudAccount.Enabled)
-		return diags
-	}
-	return diag.FromErr(fmt.Errorf("cloud account was not found"))
+	d.SetId(cloudAccount.Identity)
+	d.Set("identity", cloudAccount.Identity)
+	d.Set("enabled", cloudAccount.Enabled)
+	return nil
 }

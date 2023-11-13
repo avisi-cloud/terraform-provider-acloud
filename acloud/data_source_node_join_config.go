@@ -13,23 +13,27 @@ import (
 func dataSourceNodeJoinConfig() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceNodeJoinConfigRead,
-		Description: "Provides access to node join configuration for a node pool. Can be used in combination with other terraform providers to provision new Kubernetes Nodes for Bring Your Own Node clusters in Avisi Cloud Kubernetes.",
+		Description: `Provides access to node join configuration for a node pool. Can be used in combination with other terraform providers to provision new Kubernetes Nodes for [Bring Your Own Node](https://docs.avisi.cloud/product/kubernetes/bring-your-own-node/) clusters in Avisi Cloud Kubernetes.
+
+With Bring Your Own Node clusters you can retrieve [join configuration](https://docs.avisi.cloud/docs/how-to/kubernetes-bring-your-own-node/join-nodes-to-cluster/) for new nodes in the form of userdata or install scripts.
+This datasource only works for Bring Your Own Node clusters.
+		`,
 		Schema: map[string]*schema.Schema{
 			"id": {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			"organisation_slug": {
+			"organisation": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the Organisation",
 			},
-			"environment_slug": {
+			"environment": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the environment of the cluster",
 			},
-			"cluster_slug": {
+			"cluster": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the cluster",
@@ -69,9 +73,9 @@ func dataSourceNodeJoinConfig() *schema.Resource {
 func dataSourceNodeJoinConfigRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
 
-	organisationSlug := d.Get("organisation_slug").(string)
-	environmentSlug := d.Get("environment_slug").(string)
-	clusterSlug := d.Get("cluster_slug").(string)
+	organisationSlug := d.Get("organisation").(string)
+	environmentSlug := d.Get("environment").(string)
+	clusterSlug := d.Get("cluster").(string)
 
 	cluster, err := client.GetCluster(ctx, organisationSlug, environmentSlug, clusterSlug)
 	if err != nil {

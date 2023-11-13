@@ -14,6 +14,7 @@ import (
 
 func resourceNodepool() *schema.Resource {
 	return &schema.Resource{
+		Description:   "Create a node pool for a cluster",
 		CreateContext: resourceNodepoolCreate,
 		ReadContext:   resourceNodepoolRead,
 		UpdateContext: resourceNodepoolUpdate,
@@ -23,45 +24,82 @@ func resourceNodepool() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation_slug": {
+			"organisation": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the Organisation",
 			},
-			"environment_slug": {
+			"environment": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the Environment",
 			},
-			"cluster_slug": {
+			"cluster": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Slug of the Cluster",
+			},
+			"organisation_slug": {
+				Type:       schema.TypeString,
+				Deprecated: "replaced by organisation",
+				Optional:   true,
+				Default:    nil,
+			},
+			"environment_slug": {
+				Type:       schema.TypeString,
+				Deprecated: "replaced by environment",
+				Optional:   true,
+				Default:    nil,
+			},
+			"cluster_slug": {
+				Type:       schema.TypeString,
+				Deprecated: "replaced by cluster",
+				Optional:   true,
+				Default:    nil,
 			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of the Node Pool",
 			},
+			"availability_zone": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Availability Zone in which the nodes will be provisioned",
+			},
 			"node_size": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Type of machines in the Node Pool",
 			},
+			"node_count": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     1,
+				Description: "Number of nodes in the Node Pool. Used when auto_scaling is set to `false`.",
+			},
 			"auto_scaling": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "Enables auto scaling of the Node Pool when set to true",
+				Default:     false,
+				Description: "Enables auto scaling of the Node Pool when set to `true`",
 			},
 			"min_size": {
 				Type:        schema.TypeInt,
-				Required:    true,
-				Description: "Minimum amount of nodes in the Node Pool",
+				Optional:    true,
+				Default:     1,
+				Description: "Minimum amount of nodes in the Node Pool. Used when auto_scaling is set to `true`.",
 			},
 			"max_size": {
 				Type:        schema.TypeInt,
-				Required:    true,
-				Description: "Maximum amount of nodes in the Node Pool",
+				Optional:    true,
+				Default:     1,
+				Description: "Maximum amount of nodes in the Node Pool. Used when auto_scaling is set to `true`.",
+			},
+			"node_auto_replacement": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
@@ -109,33 +147,45 @@ func resourceNodepool() *schema.Resource {
 
 func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	var diags diag.Diagnostics
 
-	cluster := getCluster(ctx, d, m)
+	cluster, err := getClusterForNodePool(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("cluster was not found: %w", err))
+	}
 
-	if cluster == nil {
-		return diag.FromErr(fmt.Errorf("cluster was not found"))
+	nodeCount := d.Get("node_count").(int)
+	minNodePoolCount := d.Get("min_size").(int)
+	maxNodePoolCount := d.Get("max_size").(int)
+
+	autoScaling := d.Get("auto_scaling").(bool)
+	if !autoScaling {
+		minNodePoolCount = nodeCount
+		maxNodePoolCount = nodeCount
 	}
 
 	createNodepool := acloudapi.CreateNodePool{
-		Name:        d.Get("name").(string),
-		NodeSize:    d.Get("node_size").(string),
-		MinSize:     d.Get("min_size").(int),
-		MaxSize:     d.Get("max_size").(int),
-		Annotations: castInterfaceMap(d.Get("annotations").(map[string]interface{})),
-		Labels:      castInterfaceMap(d.Get("labels").(map[string]interface{})),
-		Taints:      castNodeTaints(d.Get("taints").([]interface{})),
+		Name:     d.Get("name").(string),
+		NodeSize: d.Get("node_size").(string),
+		// TODO: not yet supported by the API
+		// NodeCount: nodeCount,
+		MinSize:             minNodePoolCount,
+		MaxSize:             maxNodePoolCount,
+		AvailabilityZone:    d.Get("availability_zone").(string),
+		Annotations:         castInterfaceMap(d.Get("annotations").(map[string]interface{})),
+		Labels:              castInterfaceMap(d.Get("labels").(map[string]interface{})),
+		Taints:              castNodeTaints(d.Get("taints").([]interface{})),
+		NodeAutoReplacement: d.Get("node_auto_replacement").(bool),
 	}
 
 	nodePool, err := client.CreateNodePool(ctx, *cluster, createNodepool)
 
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to create node pool: %w", err))
 	}
 
 	if nodePool != nil {
 		d.SetId(strconv.Itoa(nodePool.ID))
-		return diags
+		return nil
 	}
 
 	return resourceNodepoolRead(ctx, d, m)
@@ -154,9 +204,7 @@ func castNodeTaints(taints []interface{}) []acloudapi.NodeTaint {
 			Value:  t["value"].(string),
 			Effect: t["effect"].(string),
 		}
-
 		result = append(result, newTaint)
-
 	}
 
 	return result
@@ -174,36 +222,28 @@ func castInterfaceMap(original map[string]interface{}) map[string]string {
 	return result
 }
 
-func getCluster(ctx context.Context, d *schema.ResourceData, m interface{}) *acloudapi.Cluster {
+func getClusterForNodePool(ctx context.Context, d *schema.ResourceData, m interface{}) (*acloudapi.Cluster, error) {
 	client := m.(acloudapi.Client)
 
-	org := d.Get("organisation_slug").(string)
-	env := d.Get("environment_slug").(string)
-	cls := d.Get("cluster_slug").(string)
+	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
+	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
+	cls := getStringAttributeWithLegacyName(d, "cluster", "cluster_slug")
 
-	cluster, _ := client.GetCluster(ctx, org, env, cls)
-
-	if cluster != nil {
-		return cluster
-	}
-
-	return nil
+	return client.GetCluster(ctx, org, env, cls)
 }
 
 func resourceNodepoolRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	var diags diag.Diagnostics
 
-	cluster := getCluster(ctx, d, m)
-
-	if cluster == nil {
-		return diag.FromErr(fmt.Errorf("cluster was not found"))
+	cluster, err := getClusterForNodePool(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("cluster was not found: %w", err))
 	}
 
 	nodePools, err := client.GetNodePoolsByCluster(ctx, *cluster)
 
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to find node pool: %w", err))
 	}
 
 	nodePoolID, _ := strconv.Atoi(d.Get("id").(string))
@@ -222,23 +262,22 @@ func resourceNodepoolRead(ctx context.Context, d *schema.ResourceData, m interfa
 	d.Set("name", nodePool.Name)
 	d.Set("node_size", nodePool.NodeSize)
 	d.Set("auto_scaling", nodePool.AutoScaling)
+	d.Set("availability_zone", nodePool.AvailabilityZone)
+	d.Set("node_auto_replacement", nodePool.NodeAutoReplacement)
 	d.Set("min_size", nodePool.MinSize)
 	d.Set("max_size", nodePool.MaxSize)
 	d.Set("annotations", nodePool.Annotations)
 	d.Set("labels", nodePool.Labels)
 	d.Set("taints", nodePool.Taints)
-
-	return diags
+	return nil
 }
 
 func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	var diags diag.Diagnostics
 
-	cluster := getCluster(ctx, d, m)
-
-	if cluster == nil {
-		return diag.FromErr(fmt.Errorf("cluster was not found"))
+	cluster, err := getClusterForNodePool(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("cluster was not found: %w", err))
 	}
 
 	nodePoolID, _ := strconv.Atoi(d.Get("id").(string))
@@ -255,7 +294,7 @@ func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	nodePool, err := client.UpdateNodePool(ctx, *cluster, nodePoolID, updateNodepool)
 
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to update node pool: %w", err))
 	}
 
 	if nodePool != nil {
@@ -264,7 +303,7 @@ func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		d.Set("max_size", nodePool.MaxSize)
 		d.Set("annotations", nodePool.Annotations)
 		d.Set("labels", nodePool.Labels)
-		return diags
+		return nil
 	}
 
 	return resourceNodepoolRead(ctx, d, m)
@@ -272,22 +311,19 @@ func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourceNodepoolDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	var diags diag.Diagnostics
-
-	cluster := getCluster(ctx, d, m)
-
-	if cluster == nil {
-		return diag.FromErr(fmt.Errorf("cluster was not found"))
+	cluster, err := getClusterForNodePool(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("cluster was not found: %w", err))
 	}
 
 	nodePoolID, _ := strconv.Atoi(d.Get("id").(string))
 
-	err := client.DeleteNodePool(ctx, *cluster, nodePoolID)
+	err = client.DeleteNodePool(ctx, *cluster, nodePoolID)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to delete node pool: %w", err))
 	}
 
 	d.SetId("")
 
-	return diags
+	return nil
 }
