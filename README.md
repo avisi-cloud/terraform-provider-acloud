@@ -1,6 +1,6 @@
 # Terraform Provider Acloud
 
-Avisi Cloud Platform Terraform Provider for managing your Avisi Cloud resources using Infrastructure as Code pratices.
+Avisi Cloud Platform Terraform Provider for managing your Avisi Cloud resources using Infrastructure as Code practices.
 
 ## Documentation
 
