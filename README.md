@@ -1,73 +1,36 @@
 # Terraform Provider Acloud
 
-## Description
-The terraform-provider-acloud is a custom Terraform provider that allows you to manage resources for Avisi Cloud.
+Avisi Cloud Platform Terraform Provider for managing your Avisi Cloud resources using Infrastructure as Code practices.
 
-## Usage
+## Documentation
 
-```terraform
-terraform {
-  required_providers {
-    acloud = {
-      version = "0.1"
-      source  = "avisi-cloud/acloud"
-    }
-  }
-}
+- [registry.terraform.io/providers/avisi-cloud/acloud/latest/docs](https://registry.terraform.io/providers/avisi-cloud/acloud/latest/docs)
 
-provider "acloud" {}
+## Requirements
 
-data "acloud_cloud_account" "staging_aws-cloud-account" {
-  organisation   = "organisation"
-  display_name   = "staging"
-  cloud_provider = "aws"
-}
+- [Terraform](https://developer.hashicorp.com/terraform/install)
 
-resource "acloud_environment" "environment_staging" {
-  name         = "staging"
-  type         = "demo"
-  organisation = "organisation"
-  description  = "Staging environment"
-}
+## Supported resources
 
-resource "acloud_cluster" "staging_cluster" {
-  name                   = "staging-cluster"
-  organisation_slug      = acloud_environment.environment_staging.organisation
-  environment_slug       = acloud_environment.environment_staging.slug
-  version                = "v1.26.9-u-ame.3"
-  region                 = "eu-west-1"
-  cloud_account_identity = data.acloud_cloud_account.staging_aws-cloud-account.identity
-}
+- `datasource_cloud_account`
+- `datasource_cloud_accounts`
+- `datasource_cloud_provider_availability_zones`
+- `datasource_cloud_provider_node_types`
+- `datasource_cloud_provider_regions`
+- `datasource_cloud_providers`
+- `datasource_cluster`
+- `datasource_environment`
+- `datasource_nodepool_join_config`
+- `datasource_organisation`
+- `datasource_update_channel`
+- `resource_cluster`
+- `resource_environment`
+- `resource_nodepool`
 
-resource "acloud_nodepool" "staging_nodepool" {
-  organisation_slug = acloud_environment.environment_staging.organisation
-  environment_slug  = acloud_environment.environment_staging.slug
-  cluster_slug      = acloud_cluster.staging_cluster.slug
-  name              = "workers1"
-  node_size         = "t3.small"
-  min_size          = 1
-  max_size          = 1
-  annotations       = {
-    "myannotation" = "test"
+## Examples
 
-  }
-  labels = {
-    "role" = "worker"
-  }
-
-  taints {
-    key    = "mytaint"
-    value  = "true"
-    effect = "NoExecute"
-  }
-
-  taints {
-    key    = "mysecondtaint"
-    value  = "true"
-    effect = "NoSchedule"
-  }
-}
-```
+- [Provider Base](examples/provider)
+- [AWS](examples/aws)
 
 ## License
 
