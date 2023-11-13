@@ -81,7 +81,6 @@ func dataSourceCluster() *schema.Resource {
 
 func dataClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	var diags diag.Diagnostics
 
 	org := d.Get("organisation").(string)
 	env := d.Get("environment").(string)
@@ -89,7 +88,7 @@ func dataClusterRead(ctx context.Context, d *schema.ResourceData, m interface{})
 
 	cluster, err := client.GetCluster(ctx, org, env, slug)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to get cluster: %w", err))
 	}
 	if cluster == nil {
 		return diag.FromErr(fmt.Errorf("cluster was not found"))
@@ -107,5 +106,5 @@ func dataClusterRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	d.Set("update_channel", cluster.UpdateChannel)
 	d.Set("status", cluster.Status)
 
-	return diags
+	return nil
 }

@@ -147,12 +147,10 @@ func resourceNodepool() *schema.Resource {
 
 func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	var diags diag.Diagnostics
 
-	cluster := getCluster(ctx, d, m)
-
-	if cluster == nil {
-		return diag.FromErr(fmt.Errorf("cluster was not found"))
+	cluster, err := getClusterForNodePool(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("cluster was not found: %w", err))
 	}
 
 	nodeCount := d.Get("node_count").(int)
@@ -182,12 +180,12 @@ func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m inter
 	nodePool, err := client.CreateNodePool(ctx, *cluster, createNodepool)
 
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to create node pool: %w", err))
 	}
 
 	if nodePool != nil {
 		d.SetId(strconv.Itoa(nodePool.ID))
-		return diags
+		return nil
 	}
 
 	return resourceNodepoolRead(ctx, d, m)
@@ -206,9 +204,7 @@ func castNodeTaints(taints []interface{}) []acloudapi.NodeTaint {
 			Value:  t["value"].(string),
 			Effect: t["effect"].(string),
 		}
-
 		result = append(result, newTaint)
-
 	}
 
 	return result
@@ -226,35 +222,28 @@ func castInterfaceMap(original map[string]interface{}) map[string]string {
 	return result
 }
 
-func getCluster(ctx context.Context, d *schema.ResourceData, m interface{}) *acloudapi.Cluster {
+func getClusterForNodePool(ctx context.Context, d *schema.ResourceData, m interface{}) (*acloudapi.Cluster, error) {
 	client := m.(acloudapi.Client)
 
 	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
 	cls := getStringAttributeWithLegacyName(d, "cluster", "cluster_slug")
 
-	cluster, _ := client.GetCluster(ctx, org, env, cls)
-
-	if cluster != nil {
-		return cluster
-	}
-
-	return nil
+	return client.GetCluster(ctx, org, env, cls)
 }
 
 func resourceNodepoolRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
 
-	cluster := getCluster(ctx, d, m)
-
-	if cluster == nil {
-		return diag.FromErr(fmt.Errorf("cluster was not found"))
+	cluster, err := getClusterForNodePool(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("cluster was not found: %w", err))
 	}
 
 	nodePools, err := client.GetNodePoolsByCluster(ctx, *cluster)
 
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to find node pool: %w", err))
 	}
 
 	nodePoolID, _ := strconv.Atoi(d.Get("id").(string))
@@ -285,12 +274,10 @@ func resourceNodepoolRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	var diags diag.Diagnostics
 
-	cluster := getCluster(ctx, d, m)
-
-	if cluster == nil {
-		return diag.FromErr(fmt.Errorf("cluster was not found"))
+	cluster, err := getClusterForNodePool(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("cluster was not found: %w", err))
 	}
 
 	nodePoolID, _ := strconv.Atoi(d.Get("id").(string))
@@ -307,7 +294,7 @@ func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	nodePool, err := client.UpdateNodePool(ctx, *cluster, nodePoolID, updateNodepool)
 
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to update node pool: %w", err))
 	}
 
 	if nodePool != nil {
@@ -316,7 +303,7 @@ func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		d.Set("max_size", nodePool.MaxSize)
 		d.Set("annotations", nodePool.Annotations)
 		d.Set("labels", nodePool.Labels)
-		return diags
+		return nil
 	}
 
 	return resourceNodepoolRead(ctx, d, m)
@@ -324,22 +311,19 @@ func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourceNodepoolDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	var diags diag.Diagnostics
-
-	cluster := getCluster(ctx, d, m)
-
-	if cluster == nil {
-		return diag.FromErr(fmt.Errorf("cluster was not found"))
+	cluster, err := getClusterForNodePool(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("cluster was not found: %w", err))
 	}
 
 	nodePoolID, _ := strconv.Atoi(d.Get("id").(string))
 
-	err := client.DeleteNodePool(ctx, *cluster, nodePoolID)
+	err = client.DeleteNodePool(ctx, *cluster, nodePoolID)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to delete node pool: %w", err))
 	}
 
 	d.SetId("")
 
-	return diags
+	return nil
 }

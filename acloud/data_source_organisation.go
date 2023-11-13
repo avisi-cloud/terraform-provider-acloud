@@ -37,8 +37,6 @@ func dataSourceOrganisations() *schema.Resource {
 
 func dataSourceOrganisationsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
 
 	organisations, err := client.GetMemberships(ctx)
 	if err != nil {
@@ -52,7 +50,7 @@ func dataSourceOrganisationsRead(ctx context.Context, d *schema.ResourceData, m 
 			d.Set("name", org.Name)
 			d.Set("slug", org.Slug)
 			d.Set("email", org.Email)
-			return diags
+			return nil
 		}
 	}
 	return diag.FromErr(fmt.Errorf("not found"))

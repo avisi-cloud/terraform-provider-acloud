@@ -132,7 +132,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 	cluster, err := client.CreateCluster(ctx, org, env, createCluster)
 
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to create cluster: %w", err))
 	}
 
 	if cluster != nil {
@@ -141,7 +141,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		d.Set("cloud_provider", cluster.CloudProvider)
 		err := WaitUntilClusterHasStatus(ctx, d, m, org, *cluster, string(ClusterStateRunning))
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.FromErr(fmt.Errorf("error while waiting for cluster: %w", err))
 		}
 		return nil
 	}
@@ -219,12 +219,12 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	cluster, err := client.UpdateCluster(ctx, org, env, slug, updateCluster)
 
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to update cluster: %w", err))
 	}
 	if cluster != nil {
 		err := WaitUntilClusterHasStatus(ctx, d, m, org, *cluster, desiredStatus)
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.FromErr(fmt.Errorf("error while waiting for cluster: %w", err))
 		}
 	}
 	return resourceClusterRead(ctx, d, m)
@@ -232,7 +232,6 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	var diags diag.Diagnostics
 
 	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
@@ -244,12 +243,12 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 
 	err := client.DeleteCluster(ctx, org, env, slug, updateCluster)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to delete cluster: %w", err))
 	}
 
 	d.SetId("")
 
-	return diags
+	return nil
 }
 
 func getTransitionStatus(desiredStatus string) string {

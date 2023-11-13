@@ -40,21 +40,16 @@ func dataSourceEnvironment() *schema.Resource {
 
 func dataSourceEnvironmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
 
 	orgSlug := d.Get("organisation").(string)
 	slug := d.Get("slug").(string)
 	environment, err := client.GetEnvironment(ctx, orgSlug, slug)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to get environment: %w", err))
 	}
-	if environment != nil {
-		d.Set("id", environment.ID)
-		d.Set("name", environment.Name)
-		d.Set("organisation", orgSlug)
-		d.Set("slug", slug)
-		return diags
-	}
-	return diag.FromErr(fmt.Errorf("environment was not found"))
+	d.Set("id", environment.ID)
+	d.Set("name", environment.Name)
+	d.Set("organisation", orgSlug)
+	d.Set("slug", slug)
+	return nil
 }

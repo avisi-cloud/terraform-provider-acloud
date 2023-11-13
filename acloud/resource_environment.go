@@ -67,8 +67,6 @@ func resourceEnvironment() *schema.Resource {
 
 func resourceEnvironmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
 
 	createEnvironment := acloudapi.CreateEnvironment{
 		Name:        d.Get("name").(string),
@@ -87,15 +85,13 @@ func resourceEnvironmentCreate(ctx context.Context, d *schema.ResourceData, m in
 	if environment != nil {
 		d.SetId(strconv.Itoa(environment.ID))
 		d.Set("slug", environment.Slug)
-		return diags
+		return nil
 	}
 	return resourceEnvironmentRead(ctx, d, m)
 }
 
 func resourceEnvironmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
 
 	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 	slug := d.Get("slug").(string)
@@ -114,15 +110,11 @@ func resourceEnvironmentRead(ctx context.Context, d *schema.ResourceData, m inte
 	d.Set("type", environment.Type)
 	d.Set("description", environment.Description)
 
-	return diags
-
+	return nil
 }
 
 func resourceEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
 	updateEnvironment := acloudapi.UpdateEnvironment{
 		Name:        d.Get("name").(string),
 		Purpose:     d.Get("purpose").(string),
@@ -143,7 +135,7 @@ func resourceEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, m in
 		d.Set("type", environment.Type)
 		d.Set("description", environment.Description)
 		d.Set("slug", environment.Slug)
-		return diags
+		return nil
 	}
 
 	return resourceEnvironmentRead(ctx, d, m)
@@ -151,9 +143,6 @@ func resourceEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceEnvironmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(acloudapi.Client)
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
 	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 	slug := d.Get("slug").(string)
 
@@ -164,5 +153,5 @@ func resourceEnvironmentDelete(ctx context.Context, d *schema.ResourceData, m in
 
 	d.SetId("")
 
-	return diags
+	return nil
 }
