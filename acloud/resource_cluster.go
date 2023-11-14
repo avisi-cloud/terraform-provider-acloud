@@ -33,17 +33,20 @@ func resourceCluster() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "Name of the Cluster",
 			},
 			"organisation": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Slug of the Organisation of the Cluster",
+				ForceNew:    true,
+				Description: "Slug of the Organisation of the Cluster. Can only be set on cluster creation.",
 			},
 			"environment": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Slug of the Environment of the Cluster",
+				ForceNew:    true,
+				Description: "Slug of the Environment of the Cluster. Can only be set on cluster creation.",
 			},
 			"organisation_slug": {
 				Type:       schema.TypeString,
@@ -73,7 +76,8 @@ func resourceCluster() *schema.Resource {
 			"region": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Region of the Cloud Provider to deploy the Cluster in",
+				ForceNew:    true,
+				Description: "Region of the Cloud Provider to deploy the Cluster in. Can only be set on cluster creation.",
 			},
 			"version": {
 				Type:        schema.TypeString,
@@ -83,12 +87,39 @@ func resourceCluster() *schema.Resource {
 			"cloud_account_identity": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Identity of the Cloud Account used to deploy the Cluster",
+				ForceNew:    true,
+				Description: "Identity of the Cloud Account used to deploy the Cluster. Can only be set on cluster creation.",
 			},
 			"update_channel": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Avisi Cloud Kubernetes Update Channel that the Cluster follows",
+			},
+			"enable_multi_availability_zones": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				ForceNew:    true,
+				Description: "Enable multi availability zones for the cluster",
+			},
+			"enable_high_available_control_plane": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Enable Highly-Availability mode for the cluster's Kubernetes Control Plane",
+			},
+			"enable_private_cluster": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    true,
+				Description: "Enable Private Cluster mode. Can only be set on cluster creation.",
+			},
+			"enable_network_encryption": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Enable Network Encryption at the node level (if supported by the CNI).",
 			},
 			"status": {
 				Type:     schema.TypeString,
@@ -118,12 +149,16 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 	nodePools := []acloudapi.NodePools{}
 
 	createCluster := acloudapi.CreateCluster{
-		Name:                 d.Get("name").(string),
-		Version:              d.Get("version").(string),
-		Region:               d.Get("region").(string),
-		CloudAccountIdentity: d.Get("cloud_account_identity").(string),
-		SLA:                  "none",
-		NodePools:            nodePools,
+		Name:                         d.Get("name").(string),
+		Version:                      d.Get("version").(string),
+		Region:                       d.Get("region").(string),
+		EnableMultiAvailabilityZones: d.Get("enable_multi_availability_zones").(bool),
+		EnableHighAvailability:       d.Get("enable_high_available_control_plane").(bool),
+		EnableNATGateway:             d.Get("enable_private_cluster").(bool),
+		EnableNetworkEncryption:      d.Get("enable_network_encryption").(bool),
+		CloudAccountIdentity:         d.Get("cloud_account_identity").(string),
+		SLA:                          "none",
+		NodePools:                    nodePools,
 	}
 
 	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
@@ -183,6 +218,10 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 	d.Set("region", cluster.Region)
 	d.Set("version", cluster.Version)
 	d.Set("update_channel", cluster.UpdateChannel)
+	d.Set("enable_multi_availability_zones", cluster.EnableMultiAvailAbilityZones)
+	d.Set("enable_high_available_control_plane", cluster.HighlyAvailable)
+	d.Set("enable_private_cluster", cluster.EnableNATGateway)
+	d.Set("enable_network_encryption", cluster.EnableNetworkEncryption)
 	d.Set("status", cluster.Status)
 
 	return nil
@@ -203,9 +242,14 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	stopped := d.Get("stopped").(bool)
 	status := d.Get("status").(string)
 
+	enableNetworkEncryption := d.Get("enable_network_encryption").(bool)
+	enableHAControlPlane := d.Get("enable_high_available_control_plane").(bool)
+
 	updateCluster := acloudapi.UpdateCluster{
-		UpdateChannel: d.Get("update_channel").(string),
-		Version:       d.Get("version").(string),
+		UpdateChannel:           d.Get("update_channel").(string),
+		Version:                 d.Get("version").(string),
+		EnableNetworkEncryption: &enableNetworkEncryption,
+		EnableHighAvailability:  &enableHAControlPlane,
 	}
 
 	desiredStatus := "running"

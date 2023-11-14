@@ -26,7 +26,8 @@ func resourceEnvironment() *schema.Resource {
 			"organisation": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Slug of the Organisation",
+				ForceNew:    true,
+				Description: "Slug of the Organisation. Can only be set on creation.",
 			},
 			"organisation_slug": {
 				Type:       schema.TypeString,

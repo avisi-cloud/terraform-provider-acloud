@@ -17,17 +17,17 @@ Create a node pool for a cluster
 
 ### Required
 
-- `cluster` (String) Slug of the Cluster
-- `environment` (String) Slug of the Environment
+- `cluster` (String) Slug of the Cluster. Can only be set on creation.
+- `environment` (String) Slug of the Environment. Can only be set on creation.
 - `name` (String) Name of the Node Pool
 - `node_size` (String) Type of machines in the Node Pool
-- `organisation` (String) Slug of the Organisation
+- `organisation` (String) Slug of the Organisation. Can only be set on creation.
 
 ### Optional
 
 - `annotations` (Map of String) Annotations to put on the nodes in the Node Pool
 - `auto_scaling` (Boolean) Enables auto scaling of the Node Pool when set to `true`
-- `availability_zone` (String) Availability Zone in which the nodes will be provisioned
+- `availability_zone` (String) Availability Zone in which the nodes will be provisioned. Can only be set on creation.
 - `cluster_slug` (String, Deprecated)
 - `environment_slug` (String, Deprecated)
 - `labels` (Map of String) Labels to put on the nodes in the Node Pool
