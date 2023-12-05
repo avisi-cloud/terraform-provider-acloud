@@ -50,7 +50,8 @@ func dataSourceCloudProviderNodeTypes() *schema.Resource {
 }
 
 func dataSourceCloudProviderNodeTypesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
 
 	cloudProviderSlug := d.Get("cloud_provider").(string)
 

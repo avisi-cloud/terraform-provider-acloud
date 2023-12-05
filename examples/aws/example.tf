@@ -8,7 +8,7 @@ terraform {
 }
 
 variable "acloud_token" {
-  sensitive = true
+  sensitive   = true
   description = "Your Avisi Cloud Personal Access Token"
 }
 
@@ -30,33 +30,30 @@ variable "cloud_account_name" {
 }
 
 provider "acloud" {
-  token      = var.acloud_token
-  acloud_api = var.acloud_api
+  token        = var.acloud_token
+  acloud_api   = var.acloud_api
+  organisation = var.organisation
 }
 
 data "acloud_cloud_account" "demo" {
-  organisation   = var.organisation
   display_name   = var.cloud_account_name
   cloud_provider = "aws"
 }
 
 # Update channel that uses Kubernetes v1.28
 data "acloud_update_channel" "channel" {
-  organisation = var.organisation
-  name         = "v1.28"
+  name = "v1.28"
 }
 
 # Create a new environment
 resource "acloud_environment" "demo" {
-  name         = "terraform-test"
-  type         = "demo"
-  organisation = var.organisation
+  name = "terraform-test"
+  type = "demo"
 }
 
 # Demo cluster that uses the Kubernetes version from the previously defined Update Channel
 resource "acloud_cluster" "demo_cluster" {
   name                   = "tf-demo-cluster"
-  organisation           = var.organisation
   environment            = acloud_environment.demo.slug
   version                = data.acloud_update_channel.channel.version
   region                 = "eu-west-1"
@@ -65,7 +62,6 @@ resource "acloud_cluster" "demo_cluster" {
 
 # Example worker node pool that will be provisioned for the created cluster
 resource "acloud_nodepool" "workers" {
-  organisation          = var.organisation
   environment           = acloud_environment.demo.slug
   cluster               = acloud_cluster.demo_cluster.slug
   name                  = "workers"
@@ -79,8 +75,4 @@ resource "acloud_nodepool" "workers" {
   labels = {
     "role" = "worker"
   }
-}
-
-output "cluster_identity" {
-  value = acloud_cluster.identity
 }

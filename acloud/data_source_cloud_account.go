@@ -6,8 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"github.com/avisi-cloud/go-client/pkg/acloudapi"
 )
 
 func dataSourceCloudAccount() *schema.Resource {
@@ -30,7 +28,7 @@ func dataSourceCloudAccount() *schema.Resource {
 			},
 			"organisation": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Slug of the Organisation",
 			},
 			"cloud_provider": {
@@ -48,8 +46,12 @@ func dataSourceCloudAccount() *schema.Resource {
 }
 
 func dataCloudAccountRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
-	org := d.Get("organisation").(string)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	displayName := d.Get("display_name").(string)
 	cloudProvider := d.Get("cloud_provider").(string)
 

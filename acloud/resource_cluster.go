@@ -2,6 +2,7 @@ package acloud
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -38,7 +39,7 @@ func resourceCluster() *schema.Resource {
 			},
 			"organisation": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "Slug of the Organisation of the Cluster. Can only be set on cluster creation.",
 			},
@@ -145,7 +146,13 @@ func resourceCluster() *schema.Resource {
 }
 
 func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	nodePools := []acloudapi.NodePools{}
 
 	createCluster := acloudapi.CreateCluster{
@@ -161,7 +168,6 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		NodePools:                    nodePools,
 	}
 
-	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
 
 	cluster, err := client.CreateCluster(ctx, org, env, createCluster)
@@ -195,9 +201,25 @@ func getStringAttributeWithLegacyName(d *schema.ResourceData, names ...string) s
 	return defaultValue
 }
 
+func getOrganisation(provider ConfiguredProvider, d *schema.ResourceData) (string, error) {
+	organisation := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
+	if organisation != "" {
+		return organisation, nil
+	}
+	if provider.Organisation != "" {
+		return provider.Organisation, nil
+	}
+	return "", errors.New("organisation is not set")
+}
+
 func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
-	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
 
 	slug := d.Get("slug").(string)
@@ -228,14 +250,18 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 }
 
 func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	diags := resourceClusterRead(ctx, d, m)
 	if diags != nil && diags.HasError() {
 		return diags
 	}
 
-	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
 	slug := d.Get("slug").(string)
 
@@ -275,9 +301,13 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
 	slug := d.Get("slug").(string)
 
@@ -285,14 +315,24 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 		Status: "deleting",
 	}
 
-	err := client.DeleteCluster(ctx, org, env, slug, updateCluster)
-	if err != nil {
+	error := client.DeleteCluster(ctx, org, env, slug, updateCluster)
+	if error != nil {
 		return diag.FromErr(fmt.Errorf("failed to delete cluster: %w", err))
 	}
 
 	d.SetId("")
 
 	return nil
+}
+
+func getProvider(m interface{}) ConfiguredProvider {
+
+	p, ok := m.(ConfiguredProvider)
+	if !ok {
+		panic("invalid configured provider")
+	}
+
+	return p
 }
 
 func getTransitionStatus(desiredStatus string) string {
@@ -305,7 +345,8 @@ func getTransitionStatus(desiredStatus string) string {
 }
 
 func WaitUntilClusterHasStatus(ctx context.Context, d *schema.ResourceData, m interface{}, org string, cluster acloudapi.Cluster, desiredStatus string) error {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
 
 	if cluster.Status == desiredStatus {
 		return nil

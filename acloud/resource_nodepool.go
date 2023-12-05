@@ -26,7 +26,7 @@ func resourceNodepool() *schema.Resource {
 			},
 			"organisation": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "Slug of the Organisation. Can only be set on creation.",
 			},
@@ -150,7 +150,8 @@ func resourceNodepool() *schema.Resource {
 }
 
 func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
 
 	cluster, err := getClusterForNodePool(ctx, d, m)
 	if err != nil {
@@ -227,9 +228,13 @@ func castInterfaceMap(original map[string]interface{}) map[string]string {
 }
 
 func getClusterForNodePool(ctx context.Context, d *schema.ResourceData, m interface{}) (*acloudapi.Cluster, error) {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
+	if err != nil {
+		return nil, err
+	}
 
-	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
 	cls := getStringAttributeWithLegacyName(d, "cluster", "cluster_slug")
 
@@ -237,7 +242,8 @@ func getClusterForNodePool(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func resourceNodepoolRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
 
 	cluster, err := getClusterForNodePool(ctx, d, m)
 	if err != nil {
@@ -277,7 +283,8 @@ func resourceNodepoolRead(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
 
 	cluster, err := getClusterForNodePool(ctx, d, m)
 	if err != nil {
@@ -314,7 +321,9 @@ func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceNodepoolDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
+
 	cluster, err := getClusterForNodePool(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("cluster was not found: %w", err))

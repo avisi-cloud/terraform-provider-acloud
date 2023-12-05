@@ -6,8 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"github.com/avisi-cloud/go-client/pkg/acloudapi"
 )
 
 func dataSourceUpdateChannel() *schema.Resource {
@@ -17,7 +15,7 @@ func dataSourceUpdateChannel() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"organisation": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Slug of the Organisation",
 			},
 			"name": {
@@ -40,10 +38,15 @@ func dataSourceUpdateChannel() *schema.Resource {
 }
 
 func dataSourceUpdateChannelRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
-	orgSlug := d.Get("organisation").(string)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	channelName := d.Get("name").(string)
-	updateChannels, err := client.GetUpdateChannels(ctx, orgSlug)
+	updateChannels, err := client.GetUpdateChannels(ctx, org)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get update channel: %w", err))
 	}

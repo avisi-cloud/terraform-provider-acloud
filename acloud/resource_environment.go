@@ -25,7 +25,7 @@ func resourceEnvironment() *schema.Resource {
 			},
 			"organisation": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "Slug of the Organisation. Can only be set on creation.",
 			},
@@ -67,7 +67,12 @@ func resourceEnvironment() *schema.Resource {
 }
 
 func resourceEnvironmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	createEnvironment := acloudapi.CreateEnvironment{
 		Name:        d.Get("name").(string),
@@ -75,8 +80,6 @@ func resourceEnvironmentCreate(ctx context.Context, d *schema.ResourceData, m in
 		Type:        d.Get("type").(string),
 		Description: d.Get("description").(string),
 	}
-
-	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 
 	environment, err := client.CreateEnvironment(ctx, createEnvironment, org)
 
@@ -92,9 +95,13 @@ func resourceEnvironmentCreate(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceEnvironmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 	slug := d.Get("slug").(string)
 	environment, err := client.GetEnvironment(ctx, org, slug)
 	if err != nil {
@@ -115,7 +122,13 @@ func resourceEnvironmentRead(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourceEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	updateEnvironment := acloudapi.UpdateEnvironment{
 		Name:        d.Get("name").(string),
 		Purpose:     d.Get("purpose").(string),
@@ -123,7 +136,6 @@ func resourceEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, m in
 		Description: d.Get("description").(string),
 	}
 
-	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
 	env := d.Get("slug").(string)
 
 	environment, err := client.UpdateEnvironment(ctx, updateEnvironment, org, env)
@@ -143,13 +155,18 @@ func resourceEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceEnvironmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
-	org := getStringAttributeWithLegacyName(d, "organisation", "organisation_slug")
-	slug := d.Get("slug").(string)
-
-	err := client.DeleteEnvironment(ctx, org, slug)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	slug := d.Get("slug").(string)
+
+	error := client.DeleteEnvironment(ctx, org, slug)
+	if error != nil {
+		return diag.FromErr(error)
 	}
 
 	d.SetId("")

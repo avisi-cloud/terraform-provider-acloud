@@ -21,7 +21,7 @@ func dataSourceCloudProviderRegions() *schema.Resource {
 			},
 			"organisation": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 			"cloud_provider": {
 				Type:     schema.TypeString,
@@ -55,17 +55,21 @@ func dataSourceCloudProviderRegions() *schema.Resource {
 }
 
 func dataSourceCloudProviderRegionsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
-
-	organisationSlug := d.Get("organisation").(string)
-	cloudProviderSlug := d.Get("cloud_provider").(string)
-
-	regions, err := client.GetRegions(ctx, organisationSlug, cloudProviderSlug)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	setAsID(d, fmt.Sprintf("%s-%s", organisationSlug, cloudProviderSlug))
+	cloudProviderSlug := d.Get("cloud_provider").(string)
+
+	regions, err := client.GetRegions(ctx, org, cloudProviderSlug)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	setAsID(d, fmt.Sprintf("%s-%s", org, cloudProviderSlug))
 
 	providersState := make([]map[string]interface{}, len(regions))
 	for i, region := range regions {

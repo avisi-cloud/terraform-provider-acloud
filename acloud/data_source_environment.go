@@ -6,8 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"github.com/avisi-cloud/go-client/pkg/acloudapi"
 )
 
 func dataSourceEnvironment() *schema.Resource {
@@ -21,7 +19,7 @@ func dataSourceEnvironment() *schema.Resource {
 			},
 			"organisation": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Slug of the organisation",
 			},
 			"name": {
@@ -39,17 +37,21 @@ func dataSourceEnvironment() *schema.Resource {
 }
 
 func dataSourceEnvironmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-	orgSlug := d.Get("organisation").(string)
 	slug := d.Get("slug").(string)
-	environment, err := client.GetEnvironment(ctx, orgSlug, slug)
+	environment, err := client.GetEnvironment(ctx, org, slug)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get environment: %w", err))
 	}
 	d.Set("id", environment.ID)
 	d.Set("name", environment.Name)
-	d.Set("organisation", orgSlug)
+	d.Set("organisation", org)
 	d.Set("slug", slug)
 	return nil
 }
