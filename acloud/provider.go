@@ -26,6 +26,11 @@ func Provider() *schema.Provider {
 				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("ACLOUD_API_ENDPOINT", "https://api.avisi.cloud"),
 			},
+			"organisation": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("ACLOUD_ORGANISATION", ""),
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"acloud_environment": resourceEnvironment(),
@@ -49,9 +54,15 @@ func Provider() *schema.Provider {
 	}
 }
 
+type ConfiguredProvider struct {
+	Client       acloudapi.Client
+	Organisation string
+}
+
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	token := d.Get("token").(string)
 	acloudApiEndpoint := d.Get("acloud_api").(string)
+	organisation := d.Get("organisation").(string)
 
 	authenticator := acloudapi.NewPersonalAccessTokenAuthenticator(token)
 	clientOpts := acloudapi.ClientOpts{
@@ -62,7 +73,13 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	if token != "" {
 		c.Resty().OnBeforeRequest(authenticator.Authenticate)
 	}
-	return c, nil
+
+	p := ConfiguredProvider{
+		Client:       c,
+		Organisation: organisation,
+	}
+
+	return p, nil
 }
 
 func setAsID(d *schema.ResourceData, customID string) {

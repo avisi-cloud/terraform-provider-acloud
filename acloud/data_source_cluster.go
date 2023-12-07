@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/avisi-cloud/go-client/pkg/acloudapi"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -24,7 +23,7 @@ func dataSourceCluster() *schema.Resource {
 			},
 			"organisation": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Slug of the Organisation of the Cluster",
 			},
 			"environment": {
@@ -80,9 +79,13 @@ func dataSourceCluster() *schema.Resource {
 }
 
 func dataClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-	org := d.Get("organisation").(string)
 	env := d.Get("environment").(string)
 	slug := d.Get("slug").(string)
 

@@ -25,7 +25,7 @@ This datasource only works for Bring Your Own Node clusters.
 			},
 			"organisation": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Slug of the Organisation",
 			},
 			"environment": {
@@ -71,13 +71,17 @@ This datasource only works for Bring Your Own Node clusters.
 }
 
 func dataSourceNodeJoinConfigRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-	organisationSlug := d.Get("organisation").(string)
 	environmentSlug := d.Get("environment").(string)
 	clusterSlug := d.Get("cluster").(string)
 
-	cluster, err := client.GetCluster(ctx, organisationSlug, environmentSlug, clusterSlug)
+	cluster, err := client.GetCluster(ctx, org, environmentSlug, clusterSlug)
 	if err != nil {
 		return diag.FromErr(err)
 	}

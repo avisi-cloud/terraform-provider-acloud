@@ -1,4 +1,4 @@
-module github.com/avisi-cloud/terraform-proivder-acloud
+module github.com/avisi-cloud/terraform-provider-acloud
 
 go 1.21
 

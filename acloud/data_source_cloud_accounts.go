@@ -21,7 +21,7 @@ func dataSourceCloudAccounts() *schema.Resource {
 			"organisation": {
 				Type:        schema.TypeString,
 				Description: "Organisation Slug",
-				Required:    true,
+				Optional:    true,
 			},
 			"cloud_provider": {
 				Type:        schema.TypeString,
@@ -59,18 +59,22 @@ func dataSourceCloudAccounts() *schema.Resource {
 }
 
 func dataSourceCloudAccountsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
-
-	organisationSlug := d.Get("organisation").(string)
-	providerFilter := d.Get("cloud_provider").(string)
-	accountNameFilter := d.Get("cloud_account_name").(string)
-
-	cloudAccounts, err := client.GetCloudAccounts(ctx, organisationSlug)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(organisationSlug)
+	providerFilter := d.Get("cloud_provider").(string)
+	accountNameFilter := d.Get("cloud_account_name").(string)
+
+	cloudAccounts, err := client.GetCloudAccounts(ctx, org)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(org)
 
 	accounts := make([]map[string]interface{}, len(cloudAccounts))
 	for i, account := range cloudAccounts {

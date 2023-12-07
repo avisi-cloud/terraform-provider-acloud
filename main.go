@@ -4,7 +4,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 
-	"github.com/avisi-cloud/terraform-proivder-acloud/acloud"
+	"github.com/avisi-cloud/terraform-provider-acloud/acloud"
 )
 
 func main() {

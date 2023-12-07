@@ -20,7 +20,7 @@ func dataSourceCloudProviders() *schema.Resource {
 			},
 			"organisation": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 			"cloud_providers": {
 				Type:     schema.TypeList,
@@ -47,16 +47,19 @@ func dataSourceCloudProviders() *schema.Resource {
 }
 
 func dataSourceCloudProvidersRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(acloudapi.Client)
-
-	organisationSlug := d.Get("organisation").(string)
-
-	cloudProviders, err := client.GetCloudProviders(ctx, organisationSlug)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(organisationSlug)
+	cloudProviders, err := client.GetCloudProviders(ctx, org)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(org)
 
 	providers := make([]map[string]interface{}, len(cloudProviders))
 	for i, cloudProvider := range cloudProviders {

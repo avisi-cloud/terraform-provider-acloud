@@ -6,8 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"github.com/avisi-cloud/go-client/pkg/acloudapi"
 )
 
 func dataSourceCloudProviderAvailabilityZones() *schema.Resource {
@@ -21,7 +19,7 @@ func dataSourceCloudProviderAvailabilityZones() *schema.Resource {
 			},
 			"organisation": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 			"cloud_provider": {
 				Type:     schema.TypeString,
@@ -45,18 +43,22 @@ func dataSourceCloudProviderAvailabilityZones() *schema.Resource {
 func dataSourceCloudProviderAvailabilityZonesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(acloudapi.Client)
-
-	organisationSlug := d.Get("organisation").(string)
-	cloudProviderSlug := d.Get("cloud_provider").(string)
-	regionSlug := d.Get("region").(string)
-
-	availabilityZones, err := client.GetAvailabilityZones(ctx, organisationSlug, cloudProviderSlug, regionSlug)
+	provider := getProvider(m)
+	client := provider.Client
+	org, err := getOrganisation(provider, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	setAsID(d, fmt.Sprintf("%s-%s", organisationSlug, cloudProviderSlug))
+	cloudProviderSlug := d.Get("cloud_provider").(string)
+	regionSlug := d.Get("region").(string)
+
+	availabilityZones, err := client.GetAvailabilityZones(ctx, org, cloudProviderSlug, regionSlug)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	setAsID(d, fmt.Sprintf("%s-%s", org, cloudProviderSlug))
 
 	zones := []string{}
 	for _, az := range availabilityZones {
