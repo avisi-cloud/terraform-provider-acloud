@@ -21,7 +21,6 @@ Create a node pool for a cluster
 - `environment` (String) Slug of the Environment. Can only be set on creation.
 - `name` (String) Name of the Node Pool
 - `node_size` (String) Type of machines in the Node Pool
-- `organisation` (String) Slug of the Organisation. Can only be set on creation.
 
 ### Optional
 
@@ -35,6 +34,7 @@ Create a node pool for a cluster
 - `min_size` (Number) Minimum amount of nodes in the Node Pool. Used when auto_scaling is set to `true`.
 - `node_auto_replacement` (Boolean)
 - `node_count` (Number) Number of nodes in the Node Pool. Used when auto_scaling is set to `false`.
+- `organisation` (String) Slug of the Organisation. Can only be set on creation.
 - `organisation_slug` (String, Deprecated)
 - `taints` (Block List) Taints to put on the nodes in the Node Pool (see [below for nested schema](#nestedblock--taints))
 

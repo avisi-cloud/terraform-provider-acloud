@@ -18,6 +18,9 @@ Get a Kubernetes update channel, including current Avisi Cloud Kubernetes versio
 ### Required
 
 - `name` (String) Name of the update channel
+
+### Optional
+
 - `organisation` (String) Slug of the Organisation
 
 ### Read-Only

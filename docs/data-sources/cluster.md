@@ -18,8 +18,11 @@ description: |-
 ### Required
 
 - `environment` (String) Slug of the Environment of the Cluster
-- `organisation` (String) Slug of the Organisation of the Cluster
 - `slug` (String) Slug of the Cluster
+
+### Optional
+
+- `organisation` (String) Slug of the Organisation of the Cluster
 
 ### Read-Only
 

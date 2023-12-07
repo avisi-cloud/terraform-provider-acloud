@@ -17,8 +17,11 @@ Get an environment
 
 ### Required
 
-- `organisation` (String) Slug of the organisation
 - `slug` (String) Slug of the environment
+
+### Optional
+
+- `organisation` (String) Slug of the organisation
 
 ### Read-Only
 

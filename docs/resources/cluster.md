@@ -20,7 +20,6 @@ Create an Avisi Cloud Kubernetes cluster within an environment
 - `cloud_account_identity` (String) Identity of the Cloud Account used to deploy the Cluster. Can only be set on cluster creation.
 - `environment` (String) Slug of the Environment of the Cluster. Can only be set on cluster creation.
 - `name` (String) Name of the Cluster
-- `organisation` (String) Slug of the Organisation of the Cluster. Can only be set on cluster creation.
 - `region` (String) Region of the Cloud Provider to deploy the Cluster in. Can only be set on cluster creation.
 - `version` (String) Avisi Cloud Kubernetes version of the Cluster
 
@@ -33,6 +32,7 @@ Create an Avisi Cloud Kubernetes cluster within an environment
 - `enable_network_encryption` (Boolean) Enable Network Encryption at the node level (if supported by the CNI).
 - `enable_private_cluster` (Boolean) Enable Private Cluster mode. Can only be set on cluster creation.
 - `environment_slug` (String, Deprecated)
+- `organisation` (String) Slug of the Organisation of the Cluster. Can only be set on cluster creation.
 - `organisation_slug` (String, Deprecated)
 - `stopped` (Boolean) Stops the Cluster if set to true. False by default
 - `update_channel` (String) Avisi Cloud Kubernetes Update Channel that the Cluster follows
