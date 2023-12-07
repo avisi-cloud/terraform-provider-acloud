@@ -6,7 +6,7 @@ bin
 
 terraform.tfvars
 
-*/.terraform.lock.hcl
+*.terraform.lock.hcl
 
 # Created by https://www.toptal.com/developers/gitignore/api/go,terraform
 # Edit at https://www.toptal.com/developers/gitignore?templates=go,terraform

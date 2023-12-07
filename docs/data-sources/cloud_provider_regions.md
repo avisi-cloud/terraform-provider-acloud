@@ -18,6 +18,9 @@ List all regions available for the cloud provider for the organisation
 ### Required
 
 - `cloud_provider` (String)
+
+### Optional
+
 - `organisation` (String)
 
 ### Read-Only

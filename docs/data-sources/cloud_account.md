@@ -19,6 +19,9 @@ Get a cloud account
 
 - `cloud_provider` (String) Slug of the Cloud Provider of the Cloud Account
 - `display_name` (String) Name of the Cloud Account
+
+### Optional
+
 - `organisation` (String) Slug of the Organisation
 
 ### Read-Only

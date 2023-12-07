@@ -18,8 +18,11 @@ List all availablility zones for a given cloud region
 ### Required
 
 - `cloud_provider` (String)
-- `organisation` (String)
 - `region` (String)
+
+### Optional
+
+- `organisation` (String)
 
 ### Read-Only
 
