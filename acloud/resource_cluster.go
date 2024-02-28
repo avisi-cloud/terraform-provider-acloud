@@ -164,7 +164,6 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		EnableNATGateway:             d.Get("enable_private_cluster").(bool),
 		EnableNetworkEncryption:      d.Get("enable_network_encryption").(bool),
 		CloudAccountIdentity:         d.Get("cloud_account_identity").(string),
-		SLA:                          "none",
 		NodePools:                    nodePools,
 	}
 
