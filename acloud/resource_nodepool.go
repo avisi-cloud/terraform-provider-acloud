@@ -24,6 +24,10 @@ func resourceNodepool() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"identity": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"organisation": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -101,9 +105,10 @@ func resourceNodepool() *schema.Resource {
 				Description: "Maximum amount of nodes in the Node Pool. Used when auto_scaling is set to `true`.",
 			},
 			"node_auto_replacement": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Auto healing for nodes within this node pool",
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
@@ -194,7 +199,6 @@ func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	return resourceNodepoolRead(ctx, d, m)
-
 }
 
 func castNodeTaints(taints []interface{}) []acloudapi.NodeTaint {
