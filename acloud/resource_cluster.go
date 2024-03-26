@@ -70,6 +70,11 @@ func resourceCluster() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"cni": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "CNI plugin for Kubernetes",
+			},
 			"cloud_provider": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -95,6 +100,12 @@ func resourceCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Avisi Cloud Kubernetes Update Channel that the Cluster follows",
+			},
+			"pod_security_standards_profile": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "privileged",
+				Description: "Pod Security Standards used by default within the cluster",
 			},
 			"enable_multi_availability_zones": {
 				Type:        schema.TypeBool,
@@ -159,6 +170,8 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		Name:                         d.Get("name").(string),
 		Version:                      d.Get("version").(string),
 		Region:                       d.Get("region").(string),
+		CNI:                          d.Get("cni").(string),
+		PodSecurityStandardsProfile:  d.Get("pod_security_standards_profile").(string),
 		EnableMultiAvailabilityZones: d.Get("enable_multi_availability_zones").(bool),
 		EnableHighAvailability:       d.Get("enable_high_available_control_plane").(bool),
 		EnableNATGateway:             d.Get("enable_private_cluster").(bool),
@@ -236,9 +249,11 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 	d.Set("description", cluster.Description)
 	d.Set("slug", cluster.Slug)
 	d.Set("cloud_provider", cluster.CloudProvider)
+	d.Set("cni", cluster.CNI)
 	d.Set("region", cluster.Region)
 	d.Set("version", cluster.Version)
 	d.Set("update_channel", cluster.UpdateChannel)
+	d.Set("pod_security_standards_profile", cluster.PodSecurityStandardsProfile)
 	d.Set("enable_multi_availability_zones", cluster.EnableMultiAvailAbilityZones)
 	d.Set("enable_high_available_control_plane", cluster.HighlyAvailable)
 	d.Set("enable_private_cluster", cluster.EnableNATGateway)
@@ -269,12 +284,13 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 	enableNetworkEncryption := d.Get("enable_network_encryption").(bool)
 	enableHAControlPlane := d.Get("enable_high_available_control_plane").(bool)
-
+	pss := d.Get("pod_security_standards_profile").(string)
 	updateCluster := acloudapi.UpdateCluster{
-		UpdateChannel:           d.Get("update_channel").(string),
-		Version:                 d.Get("version").(string),
-		EnableNetworkEncryption: &enableNetworkEncryption,
-		EnableHighAvailability:  &enableHAControlPlane,
+		UpdateChannel:               d.Get("update_channel").(string),
+		Version:                     d.Get("version").(string),
+		PodSecurityStandardsProfile: &pss,
+		EnableNetworkEncryption:     &enableNetworkEncryption,
+		EnableHighAvailability:      &enableHAControlPlane,
 	}
 
 	desiredStatus := "running"

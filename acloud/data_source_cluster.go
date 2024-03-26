@@ -41,6 +41,11 @@ func dataSourceCluster() *schema.Resource {
 				Required:    true,
 				Description: "Slug of the Cluster",
 			},
+			"cni": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "CNI plugin for Kubernetes",
+			},
 			"cloud_provider": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -69,7 +74,12 @@ func dataSourceCluster() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"deleted_protection": {
+			"pod_security_standards_profile": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Pod Security Standards used by default within the cluster",
+			},
+			"delete_protection": {
 				Description: "Is delete protection enabled on the cluster",
 				Type:        schema.TypeBool,
 				Computed:    true,
