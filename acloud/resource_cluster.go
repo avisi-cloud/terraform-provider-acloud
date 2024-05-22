@@ -74,6 +74,7 @@ func resourceCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "CNI plugin for Kubernetes",
+				Default:     "CILIUM",
 			},
 			"cloud_provider": {
 				Type:     schema.TypeString,
