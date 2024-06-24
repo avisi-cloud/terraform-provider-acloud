@@ -32,7 +32,7 @@ Create a node pool for a cluster
 - `labels` (Map of String) Labels to put on the nodes in the Node Pool
 - `max_size` (Number) Maximum amount of nodes in the Node Pool. Used when auto_scaling is set to `true`.
 - `min_size` (Number) Minimum amount of nodes in the Node Pool. Used when auto_scaling is set to `true`.
-- `node_auto_replacement` (Boolean)
+- `node_auto_replacement` (Boolean) Auto healing for nodes within this node pool
 - `node_count` (Number) Number of nodes in the Node Pool. Used when auto_scaling is set to `false`.
 - `organisation` (String) Slug of the Organisation. Can only be set on creation.
 - `organisation_slug` (String, Deprecated)
@@ -41,6 +41,7 @@ Create a node pool for a cluster
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `identity` (String)
 
 <a id="nestedblock--taints"></a>
 ### Nested Schema for `taints`

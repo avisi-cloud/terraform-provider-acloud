@@ -178,6 +178,7 @@ func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m inter
 		NodeSize: d.Get("node_size").(string),
 		// TODO: not yet supported by the API
 		// NodeCount: nodeCount,
+		AutoScaling:         autoScaling,
 		MinSize:             minNodePoolCount,
 		MaxSize:             maxNodePoolCount,
 		AvailabilityZone:    d.Get("availability_zone").(string),
@@ -314,6 +315,7 @@ func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	if nodePool != nil {
 		d.Set("node_size", nodePool.NodeSize)
+		d.Set("auto_scaling", nodePool.AutoScaling)
 		d.Set("min_size", nodePool.MinSize)
 		d.Set("max_size", nodePool.MaxSize)
 		d.Set("annotations", nodePool.Annotations)

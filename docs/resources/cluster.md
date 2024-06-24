@@ -26,6 +26,7 @@ Create an Avisi Cloud Kubernetes cluster within an environment
 ### Optional
 
 - `cluster_state_wait_seconds` (Number) Time-out for waiting until the cluster reaches the desired state
+- `cni` (String) CNI plugin for Kubernetes
 - `description` (String) Description of the Cluster
 - `enable_high_available_control_plane` (Boolean) Enable Highly-Availability mode for the cluster's Kubernetes Control Plane
 - `enable_multi_availability_zones` (Boolean) Enable multi availability zones for the cluster
@@ -34,6 +35,7 @@ Create an Avisi Cloud Kubernetes cluster within an environment
 - `environment_slug` (String, Deprecated)
 - `organisation` (String) Slug of the Organisation of the Cluster. Can only be set on cluster creation.
 - `organisation_slug` (String, Deprecated)
+- `pod_security_standards_profile` (String) Pod Security Standards used by default within the cluster
 - `stopped` (Boolean) Stops the Cluster if set to true. False by default
 - `update_channel` (String) Avisi Cloud Kubernetes Update Channel that the Cluster follows
 
