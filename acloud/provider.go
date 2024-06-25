@@ -33,11 +33,13 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"acloud_environment": resourceEnvironment(),
-			"acloud_cluster":     resourceCluster(),
-			"acloud_nodepool":    resourceNodepool(),
+			"acloud_environment":   resourceEnvironment(),
+			"acloud_cluster":       resourceCluster(),
+			"acloud_nodepool":      resourceNodepool(),
+			"acloud_cloud_account": resourceCloudAccount(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
+			"acloud_cloud_profile":                     dataSourceCloudProfile(),
 			"acloud_cloud_account":                     dataSourceCloudAccount(),
 			"acloud_cloud_accounts":                    dataSourceCloudAccounts(),
 			"acloud_cloud_provider_availability_zones": dataSourceCloudProviderAvailabilityZones(),

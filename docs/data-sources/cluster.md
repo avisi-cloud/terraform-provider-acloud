@@ -28,10 +28,12 @@ description: |-
 
 - `cloud_account_identity` (String) Identity of the Cloud Account used to deploy the Cluster
 - `cloud_provider` (String)
-- `deleted_protection` (Boolean) Is delete protection enabled on the cluster
+- `cni` (String) CNI plugin for Kubernetes
+- `delete_protection` (Boolean) Is delete protection enabled on the cluster
 - `description` (String) Description of the Cluster
 - `id` (String) The ID of this resource.
 - `name` (String) Name of the Cluster
+- `pod_security_standards_profile` (String) Pod Security Standards used by default within the cluster
 - `region` (String) Region of the Cloud Provider to deploy the Cluster in
 - `status` (String)
 - `update_channel` (String) Avisi Cloud Kubernetes Update Channel that the Cluster follows
