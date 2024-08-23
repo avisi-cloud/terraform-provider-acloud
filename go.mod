@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/avisi-cloud/go-client v0.5.3
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.34.0
-	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
+	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948
 )
 
 require (
