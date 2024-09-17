@@ -149,6 +149,12 @@ func resourceCluster() *schema.Resource {
 				Default:     600,
 				Description: "Time-out for waiting until the cluster reaches the desired state",
 			},
+			"enable_auto_upgrade": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Enable auto-upgrade for the cluster",
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -178,6 +184,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		EnableNetworkEncryption:      d.Get("enable_network_encryption").(bool),
 		CloudAccountIdentity:         d.Get("cloud_account_identity").(string),
 		NodePools:                    nodePools,
+		EnableAutoUpgrade:            d.Get("enable_auto_upgrade").(bool),
 	}
 
 	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
@@ -258,6 +265,7 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 	d.Set("enable_high_available_control_plane", cluster.HighlyAvailable)
 	d.Set("enable_private_cluster", cluster.EnableNATGateway)
 	d.Set("enable_network_encryption", cluster.EnableNetworkEncryption)
+	d.Set("enable_auto_upgrade", cluster.AutoUpgrade)
 	d.Set("status", cluster.Status)
 
 	return nil
@@ -284,6 +292,7 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 	enableNetworkEncryption := d.Get("enable_network_encryption").(bool)
 	enableHAControlPlane := d.Get("enable_high_available_control_plane").(bool)
+	enableAutoUpgrade := d.Get("enable_auto_upgrade").(bool)
 	pss := d.Get("pod_security_standards_profile").(string)
 	updateCluster := acloudapi.UpdateCluster{
 		UpdateChannel:               d.Get("update_channel").(string),
@@ -291,6 +300,7 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		PodSecurityStandardsProfile: &pss,
 		EnableNetworkEncryption:     &enableNetworkEncryption,
 		EnableHighAvailability:      &enableHAControlPlane,
+		EnableAutoUpgrade:           &enableAutoUpgrade,
 	}
 
 	desiredStatus := "running"
