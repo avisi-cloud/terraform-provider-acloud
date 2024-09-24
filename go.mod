@@ -3,12 +3,10 @@ module github.com/avisi-cloud/terraform-provider-acloud
 go 1.21
 
 require (
-	github.com/avisi-cloud/go-client v0.6.0
+	github.com/avisi-cloud/go-client v0.7.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.34.0
 	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948
 )
-
-replace github.com/avisi-cloud/go-client => ../go-client
 
 require (
 	github.com/agext/levenshtein v1.2.3 // indirect

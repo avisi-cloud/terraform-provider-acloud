@@ -155,6 +155,11 @@ func resourceCluster() *schema.Resource {
 				Default:     600,
 				Description: "Time-out for waiting until the cluster reaches the desired state",
 			},
+			"maintenance_schedule_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "ID of the maintenance schedule to apply to the cluster",
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -185,6 +190,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		EnableAutoUpgrade:            d.Get("enable_auto_upgrade").(bool),
 		CloudAccountIdentity:         d.Get("cloud_account_identity").(string),
 		NodePools:                    nodePools,
+		MaintenanceScheduleIdentity:  d.Get("maintenance_schedule_id").(string),
 	}
 
 	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
@@ -267,6 +273,7 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 	d.Set("enable_network_encryption", cluster.EnableNetworkEncryption)
 	d.Set("enable_auto_upgrade", cluster.AutoUpgrade)
 	d.Set("status", cluster.Status)
+	d.Set("maintenance_schedule_id", cluster.MaintenanceSchedule.Identity)
 
 	return nil
 }
@@ -294,6 +301,7 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	enableHAControlPlane := d.Get("enable_high_available_control_plane").(bool)
 	enableAutoUpgrade := d.Get("enable_auto_upgrade").(bool)
 	pss := d.Get("pod_security_standards_profile").(string)
+	maintenanceScheduleIdentity := d.Get("maintenance_schedule_id").(string)
 	updateCluster := acloudapi.UpdateCluster{
 		UpdateChannel:               d.Get("update_channel").(string),
 		Version:                     d.Get("version").(string),
@@ -301,6 +309,7 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		EnableNetworkEncryption:     &enableNetworkEncryption,
 		EnableHighAvailability:      &enableHAControlPlane,
 		EnableAutoUpgrade:           &enableAutoUpgrade,
+		MaintenanceScheduleIdentity: &maintenanceScheduleIdentity,
 	}
 
 	desiredStatus := "running"
