@@ -133,6 +133,12 @@ func resourceCluster() *schema.Resource {
 				Default:     true,
 				Description: "Enable Network Encryption at the node level (if supported by the CNI).",
 			},
+			"enable_auto_upgrade": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Enable auto-upgrade for the cluster",
+			},
 			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -148,12 +154,6 @@ func resourceCluster() *schema.Resource {
 				Optional:    true,
 				Default:     600,
 				Description: "Time-out for waiting until the cluster reaches the desired state",
-			},
-			"enable_auto_upgrade": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				Description: "Enable auto-upgrade for the cluster",
 			},
 		},
 		Importer: &schema.ResourceImporter{
@@ -182,9 +182,9 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		EnableHighAvailability:       d.Get("enable_high_available_control_plane").(bool),
 		EnableNATGateway:             d.Get("enable_private_cluster").(bool),
 		EnableNetworkEncryption:      d.Get("enable_network_encryption").(bool),
+		EnableAutoUpgrade:            d.Get("enable_auto_upgrade").(bool),
 		CloudAccountIdentity:         d.Get("cloud_account_identity").(string),
 		NodePools:                    nodePools,
-		EnableAutoUpgrade:            d.Get("enable_auto_upgrade").(bool),
 	}
 
 	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
