@@ -104,7 +104,7 @@ func resourceCluster() *schema.Resource {
 			"pod_security_standards_profile": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "privileged",
+				Default:     "PRIVILEGED",
 				Description: "Pod Security Standards used by default within the cluster",
 			},
 			"enable_multi_availability_zones": {
@@ -191,6 +191,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		CloudAccountIdentity:         d.Get("cloud_account_identity").(string),
 		NodePools:                    nodePools,
 		MaintenanceScheduleIdentity:  d.Get("maintenance_schedule_id").(string),
+		UpdateChannel:                d.Get("update_channel").(string),
 	}
 
 	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
@@ -298,10 +299,35 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	status := d.Get("status").(string)
 
 	enableNetworkEncryption := d.Get("enable_network_encryption").(bool)
+	if d.HasChange("enable_network_encryption") {
+		_, newVal := d.GetChange("enable_network_encryption")
+		enableNetworkEncryption = newVal.(bool)
+	}
+
 	enableHAControlPlane := d.Get("enable_high_available_control_plane").(bool)
+	if d.HasChange("enable_high_available_control_plane") {
+		_, newVal := d.GetChange("enable_high_available_control_plane")
+		enableHAControlPlane = newVal.(bool)
+	}
+
 	enableAutoUpgrade := d.Get("enable_auto_upgrade").(bool)
+	if d.HasChange("enable_auto_upgrade") {
+		_, newVal := d.GetChange("enable_auto_upgrade")
+		enableAutoUpgrade = newVal.(bool)
+	}
+
 	pss := d.Get("pod_security_standards_profile").(string)
+	if d.HasChange("pod_security_standards_profile") {
+		_, newVal := d.GetChange("pod_security_standards_profile")
+		pss = newVal.(string)
+	}
+
 	maintenanceScheduleIdentity := d.Get("maintenance_schedule_id").(string)
+	if d.HasChange("maintenance_schedule_id") {
+		_, newVal := d.GetChange("maintenance_schedule_id")
+		maintenanceScheduleIdentity = newVal.(string)
+	}
+
 	updateCluster := acloudapi.UpdateCluster{
 		UpdateChannel:               d.Get("update_channel").(string),
 		Version:                     d.Get("version").(string),
