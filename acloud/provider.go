@@ -33,10 +33,11 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"acloud_environment":   resourceEnvironment(),
-			"acloud_cluster":       resourceCluster(),
-			"acloud_nodepool":      resourceNodepool(),
-			"acloud_cloud_account": resourceCloudAccount(),
+			"acloud_environment":          resourceEnvironment(),
+			"acloud_cluster":              resourceCluster(),
+			"acloud_nodepool":             resourceNodepool(),
+			"acloud_cloud_account":        resourceCloudAccount(),
+			"acloud_maintenance_schedule": resourceMaintenanceSchedule(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"acloud_cloud_profile":                     dataSourceCloudProfile(),
@@ -51,6 +52,7 @@ func Provider() *schema.Provider {
 			"acloud_nodepool_join_config":              dataSourceNodeJoinConfig(),
 			"acloud_organisation":                      dataSourceOrganisations(),
 			"acloud_update_channel":                    dataSourceUpdateChannel(),
+			"acloud_maintenance_schedule":              dataSourceMaintenanceSchedule(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

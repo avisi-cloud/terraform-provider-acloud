@@ -104,7 +104,7 @@ func resourceCluster() *schema.Resource {
 			"pod_security_standards_profile": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "privileged",
+				Default:     "PRIVILEGED",
 				Description: "Pod Security Standards used by default within the cluster",
 			},
 			"enable_multi_availability_zones": {
@@ -133,6 +133,12 @@ func resourceCluster() *schema.Resource {
 				Default:     true,
 				Description: "Enable Network Encryption at the node level (if supported by the CNI).",
 			},
+			"enable_auto_upgrade": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Enable auto-upgrade for the cluster",
+			},
 			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -148,6 +154,11 @@ func resourceCluster() *schema.Resource {
 				Optional:    true,
 				Default:     600,
 				Description: "Time-out for waiting until the cluster reaches the desired state",
+			},
+			"maintenance_schedule_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "ID of the maintenance schedule to apply to the cluster",
 			},
 		},
 		Importer: &schema.ResourceImporter{
@@ -176,8 +187,11 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		EnableHighAvailability:       d.Get("enable_high_available_control_plane").(bool),
 		EnableNATGateway:             d.Get("enable_private_cluster").(bool),
 		EnableNetworkEncryption:      d.Get("enable_network_encryption").(bool),
+		EnableAutoUpgrade:            d.Get("enable_auto_upgrade").(bool),
 		CloudAccountIdentity:         d.Get("cloud_account_identity").(string),
 		NodePools:                    nodePools,
+		MaintenanceScheduleIdentity:  d.Get("maintenance_schedule_id").(string),
+		UpdateChannel:                d.Get("update_channel").(string),
 	}
 
 	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
@@ -258,7 +272,9 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 	d.Set("enable_high_available_control_plane", cluster.HighlyAvailable)
 	d.Set("enable_private_cluster", cluster.EnableNATGateway)
 	d.Set("enable_network_encryption", cluster.EnableNetworkEncryption)
+	d.Set("enable_auto_upgrade", cluster.AutoUpgrade)
 	d.Set("status", cluster.Status)
+	d.Set("maintenance_schedule_id", cluster.MaintenanceSchedule.Identity)
 
 	return nil
 }
@@ -283,14 +299,43 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	status := d.Get("status").(string)
 
 	enableNetworkEncryption := d.Get("enable_network_encryption").(bool)
+	if d.HasChange("enable_network_encryption") {
+		_, newVal := d.GetChange("enable_network_encryption")
+		enableNetworkEncryption = newVal.(bool)
+	}
+
 	enableHAControlPlane := d.Get("enable_high_available_control_plane").(bool)
+	if d.HasChange("enable_high_available_control_plane") {
+		_, newVal := d.GetChange("enable_high_available_control_plane")
+		enableHAControlPlane = newVal.(bool)
+	}
+
+	enableAutoUpgrade := d.Get("enable_auto_upgrade").(bool)
+	if d.HasChange("enable_auto_upgrade") {
+		_, newVal := d.GetChange("enable_auto_upgrade")
+		enableAutoUpgrade = newVal.(bool)
+	}
+
 	pss := d.Get("pod_security_standards_profile").(string)
+	if d.HasChange("pod_security_standards_profile") {
+		_, newVal := d.GetChange("pod_security_standards_profile")
+		pss = newVal.(string)
+	}
+
+	maintenanceScheduleIdentity := d.Get("maintenance_schedule_id").(string)
+	if d.HasChange("maintenance_schedule_id") {
+		_, newVal := d.GetChange("maintenance_schedule_id")
+		maintenanceScheduleIdentity = newVal.(string)
+	}
+
 	updateCluster := acloudapi.UpdateCluster{
 		UpdateChannel:               d.Get("update_channel").(string),
 		Version:                     d.Get("version").(string),
 		PodSecurityStandardsProfile: &pss,
 		EnableNetworkEncryption:     &enableNetworkEncryption,
 		EnableHighAvailability:      &enableHAControlPlane,
+		EnableAutoUpgrade:           &enableAutoUpgrade,
+		MaintenanceScheduleIdentity: &maintenanceScheduleIdentity,
 	}
 
 	desiredStatus := "running"

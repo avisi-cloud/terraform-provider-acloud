@@ -84,6 +84,11 @@ func dataSourceCluster() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},
+			"maintenance_schedule_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of the maintenance schedule for the cluster",
+			},
 		},
 	}
 }
@@ -118,6 +123,7 @@ func dataClusterRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	d.Set("version", cluster.Version)
 	d.Set("update_channel", cluster.UpdateChannel)
 	d.Set("status", cluster.Status)
+	d.Set("maintenance_schedule_id", cluster.MaintenanceSchedule.Identity)
 
 	return nil
 }
