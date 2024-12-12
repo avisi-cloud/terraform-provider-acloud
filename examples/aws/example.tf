@@ -68,6 +68,7 @@ resource "acloud_nodepool" "workers" {
   node_size             = "t3.small"
   node_count            = 1
   node_auto_replacement = false
+  upgrade_strategy      = "REPLACE_MINOR_INPLACE_PATCH_WITHOUT_DRAIN"
   annotations = {
     "myannotation" = "test"
   }

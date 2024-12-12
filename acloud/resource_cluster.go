@@ -87,7 +87,7 @@ func resourceCluster() *schema.Resource {
 			},
 			"version": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Required:    false,
 				Description: "Avisi Cloud Kubernetes version of the Cluster",
 			},
 			"cloud_account_identity": {
@@ -175,8 +175,6 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	nodePools := []acloudapi.NodePools{}
-
 	createCluster := acloudapi.CreateCluster{
 		Name:                         d.Get("name").(string),
 		Version:                      d.Get("version").(string),
@@ -189,7 +187,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		EnableNetworkEncryption:      d.Get("enable_network_encryption").(bool),
 		EnableAutoUpgrade:            d.Get("enable_auto_upgrade").(bool),
 		CloudAccountIdentity:         d.Get("cloud_account_identity").(string),
-		NodePools:                    nodePools,
+		NodePools:                    []acloudapi.NodePools{},
 		MaintenanceScheduleIdentity:  d.Get("maintenance_schedule_id").(string),
 		UpdateChannel:                d.Get("update_channel").(string),
 	}
@@ -298,6 +296,18 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	stopped := d.Get("stopped").(bool)
 	status := d.Get("status").(string)
 
+	updateChannel := d.Get("update_channel").(string)
+	if d.HasChange("update_channel") {
+		_, newVal := d.GetChange("update_channel")
+		updateChannel = newVal.(string)
+	}
+
+	version := d.Get("version").(string)
+	if d.HasChange("version") {
+		_, newVal := d.GetChange("version")
+		version = newVal.(string)
+	}
+
 	enableNetworkEncryption := d.Get("enable_network_encryption").(bool)
 	if d.HasChange("enable_network_encryption") {
 		_, newVal := d.GetChange("enable_network_encryption")
@@ -329,8 +339,8 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	updateCluster := acloudapi.UpdateCluster{
-		UpdateChannel:               d.Get("update_channel").(string),
-		Version:                     d.Get("version").(string),
+		UpdateChannel:               &updateChannel,
+		Version:                     &version,
 		PodSecurityStandardsProfile: &pss,
 		EnableNetworkEncryption:     &enableNetworkEncryption,
 		EnableHighAvailability:      &enableHAControlPlane,
@@ -372,7 +382,7 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 	slug := d.Get("slug").(string)
 
 	updateCluster := acloudapi.UpdateCluster{
-		Status: "deleting",
+		Status: ToPtr("deleting"),
 	}
 
 	error := client.DeleteCluster(ctx, org, env, slug, updateCluster)
@@ -395,13 +405,13 @@ func getProvider(m interface{}) ConfiguredProvider {
 	return p
 }
 
-func getTransitionStatus(desiredStatus string) string {
+func getTransitionStatus(desiredStatus string) *string {
 	if desiredStatus == string(ClusterStateRunning) {
-		return "starting"
+		return ToPtr("starting")
 	} else if desiredStatus == string(ClusterStateStopped) {
-		return "stopping"
+		return ToPtr("stopping")
 	}
-	return desiredStatus
+	return &desiredStatus
 }
 
 func WaitUntilClusterHasStatus(ctx context.Context, d *schema.ResourceData, m interface{}, org string, cluster acloudapi.Cluster, desiredStatus string) error {
