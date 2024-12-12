@@ -175,8 +175,6 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	nodePools := []acloudapi.NodePools{}
-
 	createCluster := acloudapi.CreateCluster{
 		Name:                         d.Get("name").(string),
 		Version:                      d.Get("version").(string),
@@ -189,7 +187,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		EnableNetworkEncryption:      d.Get("enable_network_encryption").(bool),
 		EnableAutoUpgrade:            d.Get("enable_auto_upgrade").(bool),
 		CloudAccountIdentity:         d.Get("cloud_account_identity").(string),
-		NodePools:                    nodePools,
+		NodePools:                    []acloudapi.NodePools{},
 		MaintenanceScheduleIdentity:  d.Get("maintenance_schedule_id").(string),
 		UpdateChannel:                d.Get("update_channel").(string),
 	}
@@ -329,8 +327,8 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	updateCluster := acloudapi.UpdateCluster{
-		UpdateChannel:               d.Get("update_channel").(string),
-		Version:                     d.Get("version").(string),
+		UpdateChannel:               d.Get("update_channel").(*string),
+		Version:                     d.Get("version").(*string),
 		PodSecurityStandardsProfile: &pss,
 		EnableNetworkEncryption:     &enableNetworkEncryption,
 		EnableHighAvailability:      &enableHAControlPlane,
@@ -372,7 +370,7 @@ func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, m interf
 	slug := d.Get("slug").(string)
 
 	updateCluster := acloudapi.UpdateCluster{
-		Status: "deleting",
+		Status: String("deleting"),
 	}
 
 	error := client.DeleteCluster(ctx, org, env, slug, updateCluster)
@@ -395,13 +393,13 @@ func getProvider(m interface{}) ConfiguredProvider {
 	return p
 }
 
-func getTransitionStatus(desiredStatus string) string {
+func getTransitionStatus(desiredStatus string) *string {
 	if desiredStatus == string(ClusterStateRunning) {
-		return "starting"
+		return String("starting")
 	} else if desiredStatus == string(ClusterStateStopped) {
-		return "stopping"
+		return String("starting")
 	}
-	return desiredStatus
+	return &desiredStatus
 }
 
 func WaitUntilClusterHasStatus(ctx context.Context, d *schema.ResourceData, m interface{}, org string, cluster acloudapi.Cluster, desiredStatus string) error {
