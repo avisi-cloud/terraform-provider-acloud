@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"golang.org/x/exp/slices"
 
 	"github.com/avisi-cloud/go-client/pkg/acloudapi"
@@ -110,6 +111,18 @@ func resourceNodepool() *schema.Resource {
 				Default:     true,
 				Description: "Auto healing for nodes within this node pool",
 			},
+			"upgrade_strategy": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Specify the upgrade strategy for nodes in this pool",
+				ValidateFunc: validation.StringInSlice([]string{
+					string(acloudapi.NodePoolUpgradeStrategyReplace),
+					string(acloudapi.NodePoolUpgradeStrategyInPlace),
+					string(acloudapi.NodePoolUpgradeStrategyInPlaceWithoutDrain),
+					string(acloudapi.NodePoolUpgradeStrategyReplaceMinorInPlacePatch),
+					string(acloudapi.NodePoolUpgradeStrategyReplaceMinorInPlacePatchNoDrain),
+				}, false),
+			},
 			"annotations": {
 				Type:        schema.TypeMap,
 				Optional:    true,
@@ -173,6 +186,11 @@ func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m inter
 		maxNodePoolCount = nodeCount
 	}
 
+	upgradeStrategy, err := acloudapi.ParseNodePoolUpgradeStrategy(d.Get("upgrade_strategy").(string))
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("cannot parse upgradeStrategy: %w", err))
+	}
+
 	createNodepool := acloudapi.CreateNodePool{
 		Name:     d.Get("name").(string),
 		NodeSize: d.Get("node_size").(string),
@@ -186,6 +204,7 @@ func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m inter
 		Labels:              castInterfaceMap(d.Get("labels").(map[string]interface{})),
 		Taints:              castNodeTaints(d.Get("taints").([]interface{})),
 		NodeAutoReplacement: d.Get("node_auto_replacement").(bool),
+		UpgradeStrategy:     upgradeStrategy,
 	}
 
 	nodePool, err := client.CreateNodePool(ctx, *cluster, createNodepool)
