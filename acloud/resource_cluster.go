@@ -87,7 +87,7 @@ func resourceCluster() *schema.Resource {
 			},
 			"version": {
 				Type:        schema.TypeString,
-				Required:    false,
+				Optional:    true,
 				Description: "Avisi Cloud Kubernetes version of the Cluster",
 			},
 			"cloud_account_identity": {
