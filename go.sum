@@ -7,6 +7,8 @@ github.com/avisi-cloud/go-client v0.12.0 h1:t2o+9SHbXbhsSvHOtguS0N/cYkz40n9lo+o5
 github.com/avisi-cloud/go-client v0.12.0/go.mod h1:qsImiDNnez4yr2h8LxxE2DVeol4ymrj4khbwxsskydY=
 github.com/avisi-cloud/go-client v0.13.0 h1:HUvcGfSvI76/WLHb9WhZGIS0wI0ZwRyy6hCZGGu83jM=
 github.com/avisi-cloud/go-client v0.13.0/go.mod h1:znQFt2SZVNHjAuHu6+TYGz6PGiNKwx1gMoZSQC03dNM=
+github.com/avisi-cloud/go-client v0.15.1 h1:gt6nB6GyTA/CaApf5MmHXbDNiPPwcPdodIRSbxEl6Ac=
+github.com/avisi-cloud/go-client v0.15.1/go.mod h1:3hmt4EptnjQq4vpww2LclUq7DpHnXFQiAabehpjPImQ=
 github.com/bufbuild/protocompile v0.4.0 h1:LbFKd2XowZvQ/kajzguUp2DC9UEIQhIq77fZZlaQsNA=
 github.com/bufbuild/protocompile v0.4.0/go.mod h1:3v93+mbWn/v3xzN+31nwkJfrEpAUwp+BagBSZWx+TP8=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
@@ -20,6 +22,8 @@ github.com/go-resty/resty/v2 v2.16.2 h1:CpRqTjIzq/rweXUt9+GxzzQdlkqMdt8Lm/fuK/CA
 github.com/go-resty/resty/v2 v2.16.2/go.mod h1:0fHAoK7JoBy/Ch36N8VFeMsK7xQOHhvWaC3iOktwmIU=
 github.com/go-resty/resty/v2 v2.16.3 h1:zacNT7lt4b8M/io2Ahj6yPypL7bqx9n1iprfQuodV+E=
 github.com/go-resty/resty/v2 v2.16.3/go.mod h1:hkJtXbA2iKHzJheXYvQ8snQES5ZLGKMwQ07xAwp/fiA=
+github.com/go-resty/resty/v2 v2.16.5 h1:hBKqmWrr7uRc3euHVqmh1HTHcKn99Smr7o5spptdhTM=
+github.com/go-resty/resty/v2 v2.16.5/go.mod h1:hkJtXbA2iKHzJheXYvQ8snQES5ZLGKMwQ07xAwp/fiA=
 github.com/go-test/deep v1.0.3 h1:ZrJSEWsXzPOxaZnFteGEfooLba+ju3FYIbOrS+rQd68=
 github.com/go-test/deep v1.0.3/go.mod h1:wGDj63lr65AM2AQyKZd/NYHGb0R+1RLqB8NKt3aSFNA=
 github.com/golang/protobuf v1.1.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
