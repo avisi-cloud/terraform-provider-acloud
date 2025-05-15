@@ -48,6 +48,7 @@ func Provider() *schema.Provider {
 			"acloud_cloud_provider_regions":            dataSourceCloudProviderRegions(),
 			"acloud_cloud_providers":                   dataSourceCloudProviders(),
 			"acloud_cluster":                           dataSourceCluster(),
+			"acloud_nodepool":                          dataSourceNodepool(),
 			"acloud_environment":                       dataSourceEnvironment(),
 			"acloud_nodepool_join_config":              dataSourceNodeJoinConfig(),
 			"acloud_organisation":                      dataSourceOrganisations(),
