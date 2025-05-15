@@ -27,19 +27,16 @@ func dataSourceNodepool() *schema.Resource {
 			"organisation": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Slug of the Organisation.",
 			},
 			"environment": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Slug of the Environment.",
 			},
 			"cluster": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Slug of the Cluster.",
 			},
 			"organisation_slug": {
@@ -68,7 +65,6 @@ func dataSourceNodepool() *schema.Resource {
 			"availability_zone": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Availability Zone in which the nodes was provisioned.",
 			},
 		},
