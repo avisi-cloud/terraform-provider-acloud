@@ -148,6 +148,7 @@ func resourceCluster() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 				Description: "Stops the Cluster if set to true. False by default",
+				Deprecated:  "The 'stopped' attribute is deprecated and will be removed in a future release. Stopping clusters is no longer supported.",
 			},
 			"cluster_state_wait_seconds": {
 				Type:        schema.TypeInt,
