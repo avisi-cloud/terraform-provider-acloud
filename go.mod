@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.24.3
 
 require (
-	github.com/avisi-cloud/go-client v0.13.0
+	github.com/avisi-cloud/go-client v0.15.1
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.37.0
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
 )
@@ -14,7 +14,7 @@ require (
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/fatih/color v1.18.0 // indirect
-	github.com/go-resty/resty/v2 v2.16.3 // indirect
+	github.com/go-resty/resty/v2 v2.16.5 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/hashicorp/go-cty v1.5.0 // indirect
