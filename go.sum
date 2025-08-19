@@ -9,6 +9,8 @@ github.com/avisi-cloud/go-client v0.13.0 h1:HUvcGfSvI76/WLHb9WhZGIS0wI0ZwRyy6hCZ
 github.com/avisi-cloud/go-client v0.13.0/go.mod h1:znQFt2SZVNHjAuHu6+TYGz6PGiNKwx1gMoZSQC03dNM=
 github.com/avisi-cloud/go-client v0.15.1 h1:gt6nB6GyTA/CaApf5MmHXbDNiPPwcPdodIRSbxEl6Ac=
 github.com/avisi-cloud/go-client v0.15.1/go.mod h1:3hmt4EptnjQq4vpww2LclUq7DpHnXFQiAabehpjPImQ=
+github.com/avisi-cloud/go-client v0.15.2 h1:lqz/jajH/XdgMbTHV57/Es4t/nVp/fCUtlbzdW2mx5E=
+github.com/avisi-cloud/go-client v0.15.2/go.mod h1:zu0p5OsKA1kFzlUByrKkLD8FUykItrJfxxN+BGGsyHg=
 github.com/bufbuild/protocompile v0.4.0 h1:LbFKd2XowZvQ/kajzguUp2DC9UEIQhIq77fZZlaQsNA=
 github.com/bufbuild/protocompile v0.4.0/go.mod h1:3v93+mbWn/v3xzN+31nwkJfrEpAUwp+BagBSZWx+TP8=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
