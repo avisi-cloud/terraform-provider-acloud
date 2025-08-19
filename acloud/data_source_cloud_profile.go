@@ -99,5 +99,6 @@ func dataCloudProfileRead(ctx context.Context, d *schema.ResourceData, m interfa
 	d.Set("enabled", cloudProfile.Enabled)
 	d.Set("public", cloudProfile.Public)
 	d.Set("type", cloudProfile.Type)
+	d.Set("regions", cloudProfile.Regions)
 	return nil
 }
