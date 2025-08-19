@@ -7,7 +7,7 @@ toolchain go1.24.3
 require (
 	github.com/avisi-cloud/go-client v0.15.1
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.37.0
-	golang.org/x/exp v0.0.0-20250813145105-42675adae3e6
+	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b
 )
 
 require (
