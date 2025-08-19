@@ -34,7 +34,7 @@ Avisi Cloud Platform Terraform Provider for managing your Avisi Cloud resources 
 
 ## License
 
-[Apache 2.0 License 2.0](lICENSE)
+[Apache 2.0 License](LICENSE)
 
 ## Contributing
 
