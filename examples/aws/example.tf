@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     acloud = {
-      version = ">= 0.1"
+      version = ">= 0.10.0"
       source  = "avisi-cloud/acloud"
     }
   }
@@ -10,28 +10,27 @@ terraform {
 variable "acloud_token" {
   sensitive   = true
   description = "Your Avisi Cloud Personal Access Token"
-}
-
-variable "acloud_api" {
-  description = "Avisi Cloud Platform API endpoint. This is optional."
+  default     = ""
 }
 
 variable "organisation" {
   description = "Slug of your organisation within the Avisi Cloud Platform"
+  default     = "ame"
 }
 
 variable "environment" {
-  description = "Name of the environment that will be provisioned"
+  description = "Name of the environment that will be used"
+  default     = "test"
 }
 
 variable "cloud_account_name" {
   type        = string
   description = "Name of the cloud account that will be used"
+  default     = "AWS%20Account"
 }
 
 provider "acloud" {
   token        = var.acloud_token
-  acloud_api   = var.acloud_api
   organisation = var.organisation
 }
 
@@ -42,19 +41,19 @@ data "acloud_cloud_account" "demo" {
 
 # Update channel that uses Kubernetes v1.28
 data "acloud_update_channel" "channel" {
-  name = "v1.28"
+  name = "v1.34"
 }
 
 # Create a new environment
 resource "acloud_environment" "demo" {
-  name = "terraform-test"
+  name = "test"
   type = "demo"
 }
 
 # Demo cluster that uses the Kubernetes version from the previously defined Update Channel
 resource "acloud_cluster" "demo_cluster" {
   name                   = "tf-demo-cluster"
-  environment            = acloud_environment.demo.slug
+  environment            = var.environment.demo.slug
   version                = data.acloud_update_channel.channel.version
   region                 = "eu-west-1"
   cloud_account_identity = data.acloud_cloud_account.demo.identity
