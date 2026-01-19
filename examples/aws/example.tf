@@ -26,7 +26,7 @@ variable "environment" {
 variable "cloud_account_name" {
   type        = string
   description = "Name of the cloud account that will be used"
-  default     = "AWS%20Account"
+  default     = "AWS Account"
 }
 
 provider "acloud" {

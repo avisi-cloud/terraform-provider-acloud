@@ -26,7 +26,7 @@ variable "environment" {
 variable "cloud_account_name" {
   type        = string
   description = "Name of the cloud account that will be used"
-  default     = "Cyso%20Cloud%20AMS2"
+  default     = "Cyso Cloud AMS2"
 }
 
 provider "acloud" {
