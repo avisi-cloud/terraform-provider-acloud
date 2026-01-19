@@ -292,7 +292,17 @@ func resourceNodepoolRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	nodePool := nodePools[idx]
 
+	annotations := nodePool.Annotations
+	if annotations == nil {
+		annotations = map[string]string{}
+	}
+	labels := nodePool.Labels
+	if labels == nil {
+		labels = map[string]string{}
+	}
+
 	d.SetId(strconv.Itoa(nodePool.ID))
+	d.Set("identity", nodePool.Identity)
 	d.Set("name", nodePool.Name)
 	d.Set("node_size", nodePool.NodeSize)
 	d.Set("auto_scaling", nodePool.AutoScaling)
@@ -300,8 +310,8 @@ func resourceNodepoolRead(ctx context.Context, d *schema.ResourceData, m interfa
 	d.Set("node_auto_replacement", nodePool.NodeAutoReplacement)
 	d.Set("min_size", nodePool.MinSize)
 	d.Set("max_size", nodePool.MaxSize)
-	d.Set("annotations", nodePool.Annotations)
-	d.Set("labels", nodePool.Labels)
+	d.Set("annotations", annotations)
+	d.Set("labels", labels)
 	d.Set("taints", nodePool.Taints)
 	return nil
 }

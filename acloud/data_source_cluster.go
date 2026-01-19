@@ -13,23 +13,24 @@ func dataSourceCluster() *schema.Resource {
 		ReadContext: dataClusterRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The Cluster UUID Identity as the ID of this Terraform resource",
 			},
 			"name": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Name of the Cluster",
+				Description: "The internal Terraform identifier.",
 			},
 			"organisation": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Slug of the Organisation of the Cluster",
+				Description: "Slug of the organisation of the cluster",
 			},
 			"environment": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Slug of the Environment of the Cluster",
+				Description: "Slug of the environment that the cluster is part of",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -39,7 +40,7 @@ func dataSourceCluster() *schema.Resource {
 			"slug": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Slug of the Cluster",
+				Description: "Slug of the cluster",
 			},
 			"cni": {
 				Type:        schema.TypeString,
@@ -47,18 +48,19 @@ func dataSourceCluster() *schema.Resource {
 				Description: "CNI plugin for Kubernetes",
 			},
 			"cloud_provider": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Slug of the Cloud Provider",
 			},
 			"region": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Region of the Cloud Provider to deploy the Cluster in",
+				Description: "Region of the Cloud Provider to deploy the cluster in",
 			},
 			"version": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Avisi Cloud Kubernetes version of the Cluster",
+				Description: "Avisi AME version of the cluster",
 			},
 			"cloud_account_identity": {
 				Type:        schema.TypeString,
@@ -68,11 +70,12 @@ func dataSourceCluster() *schema.Resource {
 			"update_channel": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Avisi Cloud Kubernetes Update Channel that the Cluster follows",
+				Description: "Avisi AME update channel that the cluster follows",
 			},
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Avisi AME Cluster status",
 			},
 			"pod_security_standards_profile": {
 				Type:        schema.TypeString,
@@ -84,10 +87,39 @@ func dataSourceCluster() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},
+			"enable_multi_availability_zones": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Used to configure if the cluster should support multi availability zones for its node pools",
+			},
 			"maintenance_schedule_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "ID of the maintenance schedule for the cluster",
+				Description: "UUID Identity of the maintenance schedule for the cluster",
+			},
+			"addons": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Add-ons configured for the cluster",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Name of the add-on",
+						},
+						"enabled": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Whether the add-on is enabled",
+						},
+						"custom_values": {
+							Type:        schema.TypeMap,
+							Computed:    true,
+							Description: "Custom values for the add-on. Values are stringified for the API and any keys are allowed.",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -122,8 +154,15 @@ func dataClusterRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	d.Set("region", cluster.Region)
 	d.Set("version", cluster.Version)
 	d.Set("update_channel", cluster.UpdateChannel)
+	d.Set("enable_multi_availability_zones", cluster.EnableMultiAvailAbilityZones)
 	d.Set("status", cluster.Status)
-	d.Set("maintenance_schedule_id", cluster.MaintenanceSchedule.Identity)
+	if cluster.MaintenanceSchedule != nil {
+		d.Set("maintenance_schedule_id", cluster.MaintenanceSchedule.Identity)
+	} else {
+		d.Set("maintenance_schedule_id", "")
+	}
+	flattenedAddons := flattenClusterAddons(cluster.Addons)
+	d.Set("addons", flattenedAddons)
 
 	return nil
 }

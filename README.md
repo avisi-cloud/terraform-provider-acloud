@@ -31,6 +31,7 @@ Avisi Cloud Platform Terraform Provider for managing your Avisi Cloud resources 
 
 - [Provider Base](examples/provider)
 - [AWS](examples/aws)
+- [Cyso Cloud AMS2](examples/cyso-ams2/)
 
 ## License
 

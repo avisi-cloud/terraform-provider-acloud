@@ -26,10 +26,12 @@ func resourceCluster() *schema.Resource {
 		ReadContext:   resourceClusterRead,
 		UpdateContext: resourceClusterUpdate,
 		DeleteContext: resourceClusterDelete,
+		CustomizeDiff: customizeClusterAddonsDiff,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The Cluster UUID Identity as Terraform identifier",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -87,7 +89,7 @@ func resourceCluster() *schema.Resource {
 			},
 			"version": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "Avisi Cloud Kubernetes version of the Cluster",
 			},
 			"cloud_account_identity": {
@@ -101,11 +103,42 @@ func resourceCluster() *schema.Resource {
 				Optional:    true,
 				Description: "Avisi Cloud Kubernetes Update Channel that the Cluster follows",
 			},
+			"addons": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Description: "Add-ons to configure for the cluster",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Name of the add-on",
+						},
+						"enabled": {
+							Type:        schema.TypeBool,
+							Required:    true,
+							Description: "Whether the add-on is enabled",
+						},
+						"custom_values": {
+							Type:        schema.TypeMap,
+							Optional:    true,
+							Description: "Custom values for the add-on. Values are stringified for the API and any keys are allowed.",
+						},
+					},
+				},
+			},
 			"pod_security_standards_profile": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "PRIVILEGED",
 				Description: "Pod Security Standards used by default within the cluster",
+			},
+			"delete_protection": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Is delete protection enabled on the cluster",
 			},
 			"enable_multi_availability_zones": {
 				Type:        schema.TypeBool,
@@ -125,7 +158,7 @@ func resourceCluster() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 				ForceNew:    true,
-				Description: "Enable Private Cluster mode. Can only be set on cluster creation.",
+				Description: "Enable NAT gateway for the cluster. Can only be set on cluster creation.",
 			},
 			"enable_network_encryption": {
 				Type:        schema.TypeBool,
@@ -168,6 +201,16 @@ func resourceCluster() *schema.Resource {
 	}
 }
 
+func customizeClusterAddonsDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+	rawAddons, ok := d.GetOk("addons")
+	if !ok {
+		return nil
+	}
+
+	merged := mergeClusterAddons(defaultClusterAddons(), expandClusterAddons(rawAddons.(*schema.Set).List()))
+	return d.SetNew("addons", flattenClusterAddons(merged))
+}
+
 func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	provider := getProvider(m)
 	client := provider.Client
@@ -178,6 +221,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	createCluster := acloudapi.CreateCluster{
 		Name:                         d.Get("name").(string),
+		Description:                  d.Get("description").(string),
 		Version:                      d.Get("version").(string),
 		Region:                       d.Get("region").(string),
 		CNI:                          d.Get("cni").(string),
@@ -191,6 +235,14 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		NodePools:                    []acloudapi.NodePools{},
 		MaintenanceScheduleIdentity:  d.Get("maintenance_schedule_id").(string),
 		UpdateChannel:                d.Get("update_channel").(string),
+	}
+
+	addons := defaultClusterAddons()
+	if rawAddons, ok := getClusterAddonsInput(d); ok {
+		addons = mergeClusterAddons(addons, expandClusterAddons(rawAddons))
+	}
+	if len(addons) > 0 {
+		createCluster.Addons = addons
 	}
 
 	env := getStringAttributeWithLegacyName(d, "environment", "environment_slug")
@@ -224,6 +276,22 @@ func getStringAttributeWithLegacyName(d *schema.ResourceData, names ...string) s
 		}
 	}
 	return defaultValue
+}
+
+func getClusterAddonsInput(d *schema.ResourceData) ([]interface{}, bool) {
+	if rawAddons, ok := d.GetOk("addons"); ok {
+		return rawAddons.(*schema.Set).List(), true
+	}
+	if rawAddons, ok := d.GetOk("addon"); ok {
+		return rawAddons.(*schema.Set).List(), true
+	}
+	return nil, false
+}
+
+func setClusterAddonsState(d *schema.ResourceData, addons map[string]acloudapi.APIAddon) {
+	flattened := flattenClusterAddons(addons)
+	d.Set("addon", flattened)
+	d.Set("addons", flattened)
 }
 
 func getOrganisation(provider ConfiguredProvider, d *schema.ResourceData) (string, error) {
@@ -273,7 +341,12 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 	d.Set("enable_network_encryption", cluster.EnableNetworkEncryption)
 	d.Set("enable_auto_upgrade", cluster.AutoUpgrade)
 	d.Set("status", cluster.Status)
-	d.Set("maintenance_schedule_id", cluster.MaintenanceSchedule.Identity)
+	if cluster.MaintenanceSchedule != nil {
+		d.Set("maintenance_schedule_id", cluster.MaintenanceSchedule.Identity)
+	} else {
+		d.Set("maintenance_schedule_id", "")
+	}
+	setClusterAddonsState(d, cluster.Addons)
 
 	return nil
 }
@@ -349,6 +422,10 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		MaintenanceScheduleIdentity: &maintenanceScheduleIdentity,
 	}
 
+	if d.HasChange("addons") || d.HasChange("addon") {
+		updateCluster.Addons = desiredClusterAddonsFromChange(d)
+	}
+
 	desiredStatus := "running"
 	if stopped {
 		desiredStatus = "stopped"
@@ -413,6 +490,29 @@ func getTransitionStatus(desiredStatus string) *string {
 		return ToPtr("stopping")
 	}
 	return &desiredStatus
+}
+
+func desiredClusterAddonsFromChange(d *schema.ResourceData) map[string]acloudapi.APIAddon {
+	if d.HasChange("addons") {
+		_, newVal := d.GetChange("addons")
+		return desiredClusterAddonsFromValue(newVal)
+	}
+	if d.HasChange("addon") {
+		_, newVal := d.GetChange("addon")
+		return desiredClusterAddonsFromValue(newVal)
+	}
+	return nil
+}
+
+func desiredClusterAddonsFromValue(raw interface{}) map[string]acloudapi.APIAddon {
+	if raw == nil {
+		return defaultClusterAddons()
+	}
+	set, ok := raw.(*schema.Set)
+	if !ok || set == nil {
+		return defaultClusterAddons()
+	}
+	return mergeClusterAddons(defaultClusterAddons(), expandClusterAddons(set.List()))
 }
 
 func WaitUntilClusterHasStatus(ctx context.Context, d *schema.ResourceData, m interface{}, org string, cluster acloudapi.Cluster, desiredStatus string) error {
