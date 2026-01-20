@@ -10,14 +10,15 @@ terraform {
 variable "acloud_token" {
   sensitive   = true
   description = "Your Avisi Cloud Personal Access Token"
-  default     = ""
 }
 
+# Find the organisation slug on the Settings page in the Avisi Cloud Console.
 variable "organisation" {
   description = "Slug of your organisation within the Avisi Cloud Platform"
   default     = "ame"
 }
 
+# Use a new environment name or an existing one.
 variable "environment" {
   description = "Name of the environment that will be used"
   default     = "test"
@@ -34,22 +35,24 @@ provider "acloud" {
   organisation = var.organisation
 }
 
+# Get the cloud provider slug from the cloud account page in the Avisi AME Console.
 data "acloud_cloud_account" "cyso_cloud_ams2" {
   display_name   = var.cloud_account_name
   cloud_provider = "cyso-cloud-ams2"
 }
 
+# Avisi AME recommends one of the three latest Kubernetes versions.
+# See the release notes for details: https://docs.avisi.cloud/docs/product/overview/release-notes#release-notes
 data "acloud_update_channel" "channel" {
   name = "v1.34"
 }
 
-# Create a new environment
+# Create an environment. Types: 'production', 'staging', 'development', 'demo', or 'other'.
 resource "acloud_environment" "test" {
   name = var.environment
   type = "demo"
 }
 
-# Cyso Cloud AMS2 cluster configured to match the requested settings
 resource "acloud_cluster" "cyso_cloud_ams2_cluster" {
   name                                = "Cyso Cloud AMS2"
   environment                         = acloud_environment.test.slug
@@ -79,7 +82,6 @@ resource "acloud_cluster" "cyso_cloud_ams2_cluster" {
   }
 }
 
-# Example worker node pool that will be provisioned for the created cluster
 resource "acloud_nodepool" "workers_a" {
   environment           = acloud_environment.test.slug
   cluster               = acloud_cluster.cyso_cloud_ams2_cluster.slug
