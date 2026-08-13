@@ -2,7 +2,7 @@ module github.com/avisi-cloud/terraform-provider-acloud
 
 go 1.25.8
 
-toolchain go1.26.4
+toolchain go1.26.6
 
 require (
 	github.com/avisi-cloud/go-client v0.16.1
