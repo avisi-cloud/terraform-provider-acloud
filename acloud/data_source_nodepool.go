@@ -67,6 +67,11 @@ func dataSourceNodepool() *schema.Resource {
 				Optional:    true,
 				Description: "Availability Zone in which the nodes was provisioned.",
 			},
+			"security_updates_on_join": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Install OS security updates during node bring-up, before the node joins the cluster. Applies to the first join only, not to upgrades of existing nodes.",
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -106,5 +111,6 @@ func dataNodepoolRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	d.Set("node_size", nodePool.NodeSize)
 	d.Set("auto_scaling", nodePool.AutoScaling)
 	d.Set("availability_zone", nodePool.AvailabilityZone)
+	d.Set("security_updates_on_join", string(nodePool.SecurityUpdatesOnJoin))
 	return nil
 }

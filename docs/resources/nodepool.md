@@ -36,7 +36,9 @@ Create a node pool for a cluster
 - `node_count` (Number) Number of nodes in the Node Pool. Used when auto_scaling is set to `false`.
 - `organisation` (String) Slug of the Organisation. Can only be set on creation.
 - `organisation_slug` (String, Deprecated)
+- `security_updates_on_join` (String) Install OS security updates during node bring-up, before the node joins the cluster. Applies to the first join only, not to upgrades of existing nodes.
 - `taints` (Block List) Taints to put on the nodes in the Node Pool (see [below for nested schema](#nestedblock--taints))
+- `upgrade_strategy` (String) Specify the upgrade strategy for nodes in this pool
 
 ### Read-Only
 

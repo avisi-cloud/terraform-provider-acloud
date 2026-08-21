@@ -17,38 +17,36 @@ description: |-
 
 ### Required
 
-- `environment` (String) Slug of the Environment of the Cluster
-- `slug` (String) Slug of the Cluster
+- `environment` (String) Slug of the environment that the cluster is part of
+- `slug` (String) Slug of the cluster
 
 ### Optional
 
-- `addons` (Set of Object) Add-ons configured for the cluster (see [below for nested schema](#nestedblock--addons))
-- `delete_protection` (Boolean) Is delete protection enabled on the cluster
-- `organisation` (String) Slug of the Organisation of the Cluster
+- `enable_multi_availability_zones` (Boolean) Used to configure if the cluster should support multi availability zones for its node pools
+- `organisation` (String) Slug of the organisation of the cluster
 
 ### Read-Only
 
+- `addons` (Set of Object) Add-ons configured for the cluster (see [below for nested schema](#nestedatt--addons))
 - `cloud_account_identity` (String) Identity of the Cloud Account used to deploy the Cluster
-- `cloud_provider` (String)
+- `cloud_provider` (String) Slug of the Cloud Provider
 - `cni` (String) CNI plugin for Kubernetes
+- `delete_protection` (Boolean) Is delete protection enabled on the cluster
 - `description` (String) Description of the Cluster
-- `enable_multi_availability_zones` (Boolean) Used to configure if the cluster should support multi availability zones for its node pools
 - `id` (String) The Cluster UUID Identity as the ID of this Terraform resource
-- `name` (String) Name of the Cluster
+- `maintenance_schedule_id` (String) UUID Identity of the maintenance schedule for the cluster
+- `name` (String) The internal Terraform identifier.
 - `pod_security_standards_profile` (String) Pod Security Standards used by default within the cluster
-- `region` (String) Region of the Cloud Provider to deploy the Cluster in
-- `status` (String)
-- `update_channel` (String) Avisi Cloud Kubernetes Update Channel that the Cluster follows
-- `version` (String) Avisi Cloud Kubernetes version of the Cluster
+- `region` (String) Region of the Cloud Provider to deploy the cluster in
+- `status` (String) Avisi AME Cluster status
+- `update_channel` (String) Avisi AME update channel that the cluster follows
+- `version` (String) Avisi AME version of the cluster
 
-<a id="nestedblock--addons"></a>
+<a id="nestedatt--addons"></a>
 ### Nested Schema for `addons`
 
-Required:
+Read-Only:
 
-- `name` (String) Name of the add-on
-- `enabled` (Boolean) Whether the add-on is enabled
-
-Optional:
-
-- `custom_values` (Map of String) Custom values for the add-on. Values are stringified for the API and any keys are allowed.
+- `custom_values` (Map of String)
+- `enabled` (Boolean)
+- `name` (String)

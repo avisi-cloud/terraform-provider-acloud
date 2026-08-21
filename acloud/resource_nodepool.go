@@ -123,6 +123,17 @@ func resourceNodepool() *schema.Resource {
 					string(acloudapi.NodePoolUpgradeStrategyReplaceMinorInPlacePatchNoDrain),
 				}, false),
 			},
+			"security_updates_on_join": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     string(acloudapi.NodePoolSecurityUpdatesOnJoinOff),
+				Description: "Install OS security updates during node bring-up, before the node joins the cluster. Applies to the first join only, not to upgrades of existing nodes.",
+				ValidateFunc: validation.StringInSlice([]string{
+					string(acloudapi.NodePoolSecurityUpdatesOnJoinOff),
+					string(acloudapi.NodePoolSecurityUpdatesOnJoinInstall),
+					string(acloudapi.NodePoolSecurityUpdatesOnJoinInstallAndReboot),
+				}, false),
+			},
 			"annotations": {
 				Type:        schema.TypeMap,
 				Optional:    true,
@@ -191,20 +202,26 @@ func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(fmt.Errorf("cannot parse upgradeStrategy: %w", err))
 	}
 
+	securityUpdatesOnJoin, err := acloudapi.ParseNodePoolSecurityUpdatesOnJoin(d.Get("security_updates_on_join").(string))
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("cannot parse securityUpdatesOnJoin: %w", err))
+	}
+
 	createNodepool := acloudapi.CreateNodePool{
 		Name:     d.Get("name").(string),
 		NodeSize: d.Get("node_size").(string),
 		// TODO: not yet supported by the API
 		// NodeCount: nodeCount,
-		AutoScaling:         autoScaling,
-		MinSize:             minNodePoolCount,
-		MaxSize:             maxNodePoolCount,
-		AvailabilityZone:    d.Get("availability_zone").(string),
-		Annotations:         castInterfaceMap(d.Get("annotations").(map[string]interface{})),
-		Labels:              castInterfaceMap(d.Get("labels").(map[string]interface{})),
-		Taints:              castNodeTaints(d.Get("taints").([]interface{})),
-		NodeAutoReplacement: d.Get("node_auto_replacement").(bool),
-		UpgradeStrategy:     upgradeStrategy,
+		AutoScaling:           autoScaling,
+		MinSize:               minNodePoolCount,
+		MaxSize:               maxNodePoolCount,
+		AvailabilityZone:      d.Get("availability_zone").(string),
+		Annotations:           castInterfaceMap(d.Get("annotations").(map[string]interface{})),
+		Labels:                castInterfaceMap(d.Get("labels").(map[string]interface{})),
+		Taints:                castNodeTaints(d.Get("taints").([]interface{})),
+		NodeAutoReplacement:   d.Get("node_auto_replacement").(bool),
+		UpgradeStrategy:       upgradeStrategy,
+		SecurityUpdatesOnJoin: securityUpdatesOnJoin,
 	}
 
 	nodePool, err := client.CreateNodePool(ctx, *cluster, createNodepool)
@@ -313,6 +330,7 @@ func resourceNodepoolRead(ctx context.Context, d *schema.ResourceData, m interfa
 	d.Set("annotations", annotations)
 	d.Set("labels", labels)
 	d.Set("taints", nodePool.Taints)
+	d.Set("security_updates_on_join", string(nodePool.SecurityUpdatesOnJoin))
 	return nil
 }
 
@@ -327,13 +345,19 @@ func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	nodePoolID, _ := strconv.Atoi(d.Get("id").(string))
 
+	securityUpdatesOnJoin, err := acloudapi.ParseNodePoolSecurityUpdatesOnJoin(d.Get("security_updates_on_join").(string))
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("cannot parse securityUpdatesOnJoin: %w", err))
+	}
+
 	updateNodepool := acloudapi.CreateNodePool{
-		NodeSize:    d.Get("node_size").(string),
-		MinSize:     d.Get("min_size").(int),
-		MaxSize:     d.Get("max_size").(int),
-		Annotations: castInterfaceMap(d.Get("annotations").(map[string]interface{})),
-		Labels:      castInterfaceMap(d.Get("labels").(map[string]interface{})),
-		Taints:      castNodeTaints(d.Get("taints").([]interface{})),
+		NodeSize:              d.Get("node_size").(string),
+		MinSize:               d.Get("min_size").(int),
+		MaxSize:               d.Get("max_size").(int),
+		Annotations:           castInterfaceMap(d.Get("annotations").(map[string]interface{})),
+		Labels:                castInterfaceMap(d.Get("labels").(map[string]interface{})),
+		Taints:                castNodeTaints(d.Get("taints").([]interface{})),
+		SecurityUpdatesOnJoin: securityUpdatesOnJoin,
 	}
 
 	nodePool, err := client.UpdateNodePool(ctx, *cluster, nodePoolID, updateNodepool)
@@ -349,6 +373,7 @@ func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		d.Set("max_size", nodePool.MaxSize)
 		d.Set("annotations", nodePool.Annotations)
 		d.Set("labels", nodePool.Labels)
+		d.Set("security_updates_on_join", string(nodePool.SecurityUpdatesOnJoin))
 		return nil
 	}
 

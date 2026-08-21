@@ -61,13 +61,14 @@ resource "acloud_cluster" "demo_cluster" {
 
 # Example worker node pool that will be provisioned for the created cluster
 resource "acloud_nodepool" "workers" {
-  environment           = acloud_environment.demo.slug
-  cluster               = acloud_cluster.demo_cluster.slug
-  name                  = "workers"
-  node_size             = "t3.small"
-  node_count            = 1
-  node_auto_replacement = false
-  upgrade_strategy      = "REPLACE_MINOR_INPLACE_PATCH_WITHOUT_DRAIN"
+  environment              = acloud_environment.demo.slug
+  cluster                  = acloud_cluster.demo_cluster.slug
+  name                     = "workers"
+  node_size                = "t3.small"
+  node_count               = 1
+  node_auto_replacement    = false
+  upgrade_strategy         = "REPLACE_MINOR_INPLACE_PATCH_WITHOUT_DRAIN"
+  security_updates_on_join = "INSTALL_AND_REBOOT"
   annotations = {
     "myannotation" = "test"
   }
