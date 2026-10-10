@@ -7,7 +7,7 @@ toolchain go1.27.1
 require (
 	github.com/avisi-cloud/go-client v0.17.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.1
-	golang.org/x/exp v0.0.0-20260908205506-85c1c2202aba
+	golang.org/x/exp v0.0.0-20261009195045-ca0d7ba23607
 )
 
 require (
@@ -47,7 +47,7 @@ require (
 	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
-	golang.org/x/tools v0.50.0 // indirect
+	golang.org/x/tools v0.51.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	google.golang.org/grpc v1.79.3 // indirect
