@@ -4,6 +4,7 @@ resource "acloud_cluster" "example" {
   region                 = "eu-west-1"
   version                = "1.34"
   cloud_account_identity = "account-1"
+  node_port_access       = "allowlist"
 
   addons {
     name    = "logging"

@@ -19,6 +19,7 @@ resource "acloud_cluster" "example" {
   region                 = "eu-west-1"
   version                = "1.34"
   cloud_account_identity = "account-1"
+  node_port_access       = "allowlist"
 
   addons {
     name    = "logging"
@@ -52,6 +53,7 @@ resource "acloud_cluster" "example" {
 - `enable_private_cluster` (Boolean) Enable NAT gateway for the cluster. Can only be set on cluster creation.
 - `environment_slug` (String, Deprecated)
 - `maintenance_schedule_id` (String) ID of the maintenance schedule to apply to the cluster
+- `node_port_access` (String) Where the NodePort range of the cluster nodes can be reached from. `internal`: only from the internal network of the cluster. `allowlist`: from the internal network and the IP addresses in the `ipWhitelist` of the cluster. With an empty `ipWhitelist`, only the internal network is allowed; this differs from API server access, where an empty `ipWhitelist` allows everyone. `public`: from anywhere. Applies to clusters whose nodes have public IP addresses. Defaults to `internal`.
 - `organisation` (String) Slug of the Organisation of the Cluster. Can only be set on cluster creation.
 - `organisation_slug` (String, Deprecated)
 - `pod_security_standards_profile` (String) Pod Security Standards used by default within the cluster

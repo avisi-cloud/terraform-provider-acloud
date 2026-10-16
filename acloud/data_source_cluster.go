@@ -82,6 +82,11 @@ func dataSourceCluster() *schema.Resource {
 				Computed:    true,
 				Description: "Pod Security Standards used by default within the cluster",
 			},
+			"node_port_access": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: nodePortAccessDescription,
+			},
 			"delete_protection": {
 				Description: "Is delete protection enabled on the cluster",
 				Type:        schema.TypeBool,
@@ -154,6 +159,7 @@ func dataClusterRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	d.Set("region", cluster.Region)
 	d.Set("version", cluster.Version)
 	d.Set("update_channel", cluster.UpdateChannel)
+	d.Set("node_port_access", string(cluster.NodePortAccess))
 	d.Set("enable_multi_availability_zones", cluster.EnableMultiAvailAbilityZones)
 	d.Set("status", cluster.Status)
 	if cluster.MaintenanceSchedule != nil {
