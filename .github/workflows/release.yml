@@ -21,10 +21,14 @@ jobs:
         with:
           # Allow goreleaser to access older tag information.
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
+          # Installs the go.mod toolchain directive version and exports GOTOOLCHAIN=local.
+          # Do not set GOTOOLCHAIN=local before this step: setup-go then falls back to the go directive.
           go-version-file: 'go.mod'
-          cache: true
+          # Build releases from a clean module cache instead of restoring caches written by other runs.
+          cache: false
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7.0.0
         id: import_gpg
@@ -34,6 +38,8 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
         with:
+          # renovate: datasource=github-releases depName=goreleaser/goreleaser
+          version: v2.18.3
           args: release --clean
         env:
           # GitHub sets the GITHUB_TOKEN secret automatically.
