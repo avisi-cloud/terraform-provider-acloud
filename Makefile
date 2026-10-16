@@ -1,10 +1,15 @@
-TEST?=$$(go list ./... | grep -v 'vendor')
 HOSTNAME=avisi.cloud
 NAMESPACE=ame
 NAME=acloud
 BINARY=terraform-provider-${NAME}
 VERSION=0.2
-OS_ARCH=darwin_arm64
+OS_ARCH?=$(shell go env GOOS)_$(shell go env GOARCH)
+
+# Pinned so CI results only change when this version (or the vulnerability database) changes.
+# renovate: datasource=go depName=golang.org/x/vuln
+GOVULNCHECK_VERSION=v1.9.0
+
+.PHONY: default build release install test testrace testacc vet fmt fmtcheck tidycheck vulncheck check
 
 default: install
 
@@ -29,9 +34,36 @@ install: build
 	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 
-test: 
-	go test -i $(TEST) || exit 1                                                   
-	echo $(TEST) | xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4                    
+# Unit tests only: TF_ACC is cleared so acceptance tests are skipped even if it is set in your shell.
+test:
+	TF_ACC= go test ./... $(TESTARGS) -timeout=5m
 
-testacc: 
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
+testrace:
+	TF_ACC= go test -race ./... $(TESTARGS) -timeout=10m
+
+# Acceptance tests create and destroy real Avisi Cloud resources and require credentials
+# (ACLOUD_PERSONAL_ACCESS_TOKEN, ACLOUD_ORGANISATION, optionally ACLOUD_API_ENDPOINT).
+testacc:
+	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m
+
+vet:
+	go vet ./...
+
+fmt:
+	gofmt -w .
+
+fmtcheck:
+	@unformatted="$$(gofmt -l .)" || exit $$?; \
+	if [ -n "$$unformatted" ]; then \
+		echo "The following files are not gofmt-formatted (run 'make fmt'):"; \
+		echo "$$unformatted"; \
+		exit 1; \
+	fi
+
+tidycheck:
+	go mod tidy -diff
+
+vulncheck:
+	go run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) ./...
+
+check: fmtcheck tidycheck vet test testrace vulncheck
