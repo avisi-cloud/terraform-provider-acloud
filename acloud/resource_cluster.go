@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/avisi-cloud/go-client/pkg/acloudapi"
 )
@@ -134,6 +135,13 @@ func resourceCluster() *schema.Resource {
 				Default:     "PRIVILEGED",
 				Description: "Pod Security Standards used by default within the cluster",
 			},
+			"node_port_access": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      string(acloudapi.NodePortAccessInternal),
+				Description:  nodePortAccessDescription + " Defaults to `internal`.",
+				ValidateFunc: validation.StringInSlice(nodePortAccessValues(), false),
+			},
 			"delete_protection": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -201,6 +209,22 @@ func resourceCluster() *schema.Resource {
 	}
 }
 
+const nodePortAccessDescription = "Where the NodePort range of the cluster nodes can be reached from. " +
+	"`internal`: only from the internal network of the cluster. " +
+	"`allowlist`: from the internal network and the IP addresses in the `ipWhitelist` of the cluster. " +
+	"With an empty `ipWhitelist`, only the internal network is allowed; " +
+	"this differs from API server access, where an empty `ipWhitelist` allows everyone. " +
+	"`public`: from anywhere. " +
+	"Applies to clusters whose nodes have public IP addresses."
+
+func nodePortAccessValues() []string {
+	values := make([]string, 0, len(acloudapi.AllNodePortAccess))
+	for _, nodePortAccess := range acloudapi.AllNodePortAccess {
+		values = append(values, string(nodePortAccess))
+	}
+	return values
+}
+
 func customizeClusterAddonsDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
 	rawAddons, ok := d.GetOk("addons")
 	if !ok {
@@ -219,6 +243,11 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
+	nodePortAccess, err := acloudapi.ParseNodePortAccess(d.Get("node_port_access").(string))
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("cannot parse nodePortAccess: %w", err))
+	}
+
 	createCluster := acloudapi.CreateCluster{
 		Name:                         d.Get("name").(string),
 		Description:                  d.Get("description").(string),
@@ -226,6 +255,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		Region:                       d.Get("region").(string),
 		CNI:                          d.Get("cni").(string),
 		PodSecurityStandardsProfile:  d.Get("pod_security_standards_profile").(string),
+		NodePortAccess:               nodePortAccess,
 		EnableMultiAvailabilityZones: d.Get("enable_multi_availability_zones").(bool),
 		EnableHighAvailability:       d.Get("enable_high_available_control_plane").(bool),
 		EnableNATGateway:             d.Get("enable_private_cluster").(bool),
@@ -257,6 +287,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		d.SetId(cluster.Identity)
 		d.Set("slug", cluster.Slug)
 		d.Set("cloud_provider", cluster.CloudProvider)
+		d.Set("node_port_access", string(cluster.NodePortAccess))
 		err := WaitUntilClusterHasStatus(ctx, d, m, org, *cluster, string(ClusterStateRunning))
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("error while waiting for cluster: %w", err))
@@ -335,6 +366,7 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 	d.Set("version", cluster.Version)
 	d.Set("update_channel", cluster.UpdateChannel)
 	d.Set("pod_security_standards_profile", cluster.PodSecurityStandardsProfile)
+	d.Set("node_port_access", string(cluster.NodePortAccess))
 	d.Set("enable_multi_availability_zones", cluster.EnableMultiAvailAbilityZones)
 	d.Set("enable_high_available_control_plane", cluster.HighlyAvailable)
 	d.Set("enable_private_cluster", cluster.EnableNATGateway)
@@ -420,6 +452,16 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		EnableHighAvailability:      &enableHAControlPlane,
 		EnableAutoUpgrade:           &enableAutoUpgrade,
 		MaintenanceScheduleIdentity: &maintenanceScheduleIdentity,
+	}
+
+	// PATCH semantics: leave nodePortAccess out unless it changed.
+	if d.HasChange("node_port_access") {
+		_, newVal := d.GetChange("node_port_access")
+		nodePortAccess, err := acloudapi.ParseNodePortAccess(newVal.(string))
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("cannot parse nodePortAccess: %w", err))
+		}
+		updateCluster.NodePortAccess = &nodePortAccess
 	}
 
 	if d.HasChange("addons") || d.HasChange("addon") {

@@ -36,6 +36,7 @@ description: |-
 - `id` (String) The Cluster UUID Identity as the ID of this Terraform resource
 - `maintenance_schedule_id` (String) UUID Identity of the maintenance schedule for the cluster
 - `name` (String) The internal Terraform identifier.
+- `node_port_access` (String) Where the NodePort range of the cluster nodes can be reached from. `internal`: only from the internal network of the cluster. `allowlist`: from the internal network and the IP addresses in the `ipWhitelist` of the cluster. With an empty `ipWhitelist`, only the internal network is allowed; this differs from API server access, where an empty `ipWhitelist` allows everyone. `public`: from anywhere. Applies to clusters whose nodes have public IP addresses.
 - `pod_security_standards_profile` (String) Pod Security Standards used by default within the cluster
 - `region` (String) Region of the Cloud Provider to deploy the cluster in
 - `status` (String) Avisi AME Cluster status
