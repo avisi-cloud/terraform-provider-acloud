@@ -14,4 +14,12 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: 'stable'
+      # terraform fmt for the examples, and tfplugindocs uses terraform to read the provider schema.
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+      - run: make fmt-check
+      - run: make vet
       - run: make test
+      # Fails when docs/ doesn't match the schema, templates/ and examples/: run `make docs` and commit.
+      - run: make docs-check
