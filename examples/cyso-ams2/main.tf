@@ -1,32 +1,32 @@
 terraform {
   required_providers {
     acloud = {
-      version = ">= 0.10.0"
       source  = "avisi-cloud/acloud"
+      version = ">= 0.12.0"
     }
   }
 }
 
 variable "acloud_token" {
+  description = "Avisi Cloud Personal Access Token. Create one under API Access in the Console."
+  type        = string
   sensitive   = true
-  description = "Your Avisi Cloud Personal Access Token"
 }
 
-# Find the organisation slug on the Settings page in the Avisi Cloud Console.
 variable "organisation" {
-  description = "Slug of your organisation within the Avisi Cloud Platform"
-  default     = "ame"
+  description = "Slug of your Avisi Cloud organisation, shown on the Settings page in the Console."
+  type        = string
 }
 
-# Use a new environment name or an existing one.
 variable "environment" {
-  description = "Name of the environment that will be used"
+  description = "Name of the environment to create for the cluster."
+  type        = string
   default     = "test"
 }
 
 variable "cloud_account_name" {
+  description = "Display name of an existing Cyso Cloud AMS2 cloud account in the Console."
   type        = string
-  description = "Name of the cloud account that will be used"
   default     = "Cyso Cloud AMS2"
 }
 
@@ -35,31 +35,34 @@ provider "acloud" {
   organisation = var.organisation
 }
 
-# Get the cloud provider slug from the cloud account page in the Avisi AME Console.
-data "acloud_cloud_account" "cyso_cloud_ams2" {
+locals {
+  # One worker pool per availability zone of the ams2 region.
+  zones = ["ams2-a", "ams2-b", "ams2-c"]
+}
+
+data "acloud_cloud_account" "cyso" {
   display_name   = var.cloud_account_name
   cloud_provider = "cyso-cloud-ams2"
 }
 
-# Avisi AME recommends one of the three latest Kubernetes versions.
-# See the release notes for details: https://docs.avisi.cloud/docs/product/overview/release-notes#release-notes
+# Avisi AME supports the three latest Kubernetes versions:
+# https://docs.avisi.cloud/docs/product/overview/release-notes#release-notes
 data "acloud_update_channel" "channel" {
   name = "v1.34"
 }
 
-# Create an environment. Types: 'production', 'staging', 'development', 'demo', or 'other'.
 resource "acloud_environment" "test" {
   name = var.environment
-  type = "demo"
+  type = "demo" # production, staging, development, demo or other
 }
 
-resource "acloud_cluster" "cyso_cloud_ams2_cluster" {
+resource "acloud_cluster" "cyso" {
   name                                = "Cyso Cloud AMS2"
   environment                         = acloud_environment.test.slug
   version                             = data.acloud_update_channel.channel.version
   update_channel                      = data.acloud_update_channel.channel.name
   region                              = "ams2"
-  cloud_account_identity              = data.acloud_cloud_account.cyso_cloud_ams2.identity
+  cloud_account_identity              = data.acloud_cloud_account.cyso.identity
   cni                                 = "CILIUM"
   pod_security_standards_profile      = "RESTRICTED"
   enable_high_available_control_plane = true
@@ -82,56 +85,18 @@ resource "acloud_cluster" "cyso_cloud_ams2_cluster" {
   }
 }
 
-resource "acloud_nodepool" "workers_a" {
-  environment           = acloud_environment.test.slug
-  cluster               = acloud_cluster.cyso_cloud_ams2_cluster.slug
-  name                  = "workers-a"
-  node_size             = "s5.small"
-  availability_zone     = "ams2-a"
-  auto_scaling          = false
-  min_size              = 1
-  max_size              = 1
-  node_count            = 1
-  node_auto_replacement = true
-  upgrade_strategy      = "REPLACE_MINOR_INPLACE_PATCH_WITHOUT_DRAIN"
-  annotations = {
-    "myannotation" = "test"
-  }
+resource "acloud_nodepool" "workers" {
+  for_each = toset(local.zones)
+
+  environment       = acloud_environment.test.slug
+  cluster           = acloud_cluster.cyso.slug
+  name              = "workers-${trimprefix(each.key, "ams2-")}"
+  node_size         = "s5.small"
+  availability_zone = each.key
+  node_count        = 1
+  upgrade_strategy  = "REPLACE_MINOR_INPLACE_PATCH_WITHOUT_DRAIN"
+
   labels = {
     "role" = "worker"
   }
-  taints {
-    key    = "dedicated"
-    value  = "system"
-    effect = "NoSchedule"
-  }
-}
-
-# Additional worker node pools for multi-AZ setup
-resource "acloud_nodepool" "workers_b" {
-  environment           = acloud_environment.test.slug
-  cluster               = acloud_cluster.cyso_cloud_ams2_cluster.slug
-  name                  = "workers-b"
-  node_size             = "s5.small"
-  availability_zone     = "ams2-b"
-  auto_scaling          = false
-  min_size              = 1
-  max_size              = 1
-  node_count            = 1
-  node_auto_replacement = true
-  upgrade_strategy      = "REPLACE_MINOR_INPLACE_PATCH_WITHOUT_DRAIN"
-}
-
-resource "acloud_nodepool" "workers_c" {
-  environment           = acloud_environment.test.slug
-  cluster               = acloud_cluster.cyso_cloud_ams2_cluster.slug
-  name                  = "workers-c"
-  node_size             = "s5.small"
-  availability_zone     = "ams2-c"
-  auto_scaling          = false
-  min_size              = 1
-  max_size              = 1
-  node_count            = 1
-  node_auto_replacement = true
-  upgrade_strategy      = "REPLACE_MINOR_INPLACE_PATCH_WITHOUT_DRAIN"
 }
