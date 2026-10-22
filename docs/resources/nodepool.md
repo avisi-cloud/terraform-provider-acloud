@@ -27,6 +27,7 @@ Create a node pool for a cluster
 - `annotations` (Map of String) Annotations to put on the nodes in the Node Pool
 - `auto_scaling` (Boolean) Enables auto scaling of the Node Pool when set to `true`
 - `availability_zone` (String) Availability Zone in which the nodes will be provisioned. Can only be set on creation.
+- `boot_disk_source` (String) What new nodes boot from. `volume`: a separate volume of `volume_size` GB. `node-type-disk`: the disk that comes with the node type, without a separate volume; the cloud provider must allow it. Only supported on OpenStack. Applies only to nodes created after the change. When not set, the cloud provider's base source is used, and removing the attribute keeps the current value.
 - `cluster_slug` (String, Deprecated)
 - `environment_slug` (String, Deprecated)
 - `labels` (Map of String) Labels to put on the nodes in the Node Pool
@@ -39,6 +40,7 @@ Create a node pool for a cluster
 - `security_updates_on_join` (String) Install OS security updates during node bring-up, before the node joins the cluster. Applies to the first join only, not to upgrades of existing nodes.
 - `taints` (Block List) Taints to put on the nodes in the Node Pool (see [below for nested schema](#nestedblock--taints))
 - `upgrade_strategy` (String) Specify the upgrade strategy for nodes in this pool
+- `volume_size` (Number) Size in GB of the volume new nodes boot from, when `boot_disk_source` is `volume`. `0` means the default size of the cloud provider. The cloud provider must allow a custom volume size. Applies only to nodes created after the change. Leave it out for the default size: the API stores the default size as not set, so configuring the default size itself (50) shows a diff on every plan. Can not be combined with `boot_disk_source = "node-type-disk"`.
 
 ### Read-Only
 

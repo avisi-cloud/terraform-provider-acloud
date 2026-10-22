@@ -30,7 +30,9 @@ description: |-
 
 ### Read-Only
 
+- `boot_disk_source` (String) What new nodes boot from. `volume`: a separate volume of `volume_size` GB. `node-type-disk`: the disk that comes with the node type, without a separate volume; the cloud provider must allow it. Only supported on OpenStack. Applies only to nodes created after the change. Empty for cloud providers without boot disk choices.
 - `id` (String) The ID of this resource.
 - `identity` (String)
 - `name` (String) Name of the Node Pool
 - `security_updates_on_join` (String) Install OS security updates during node bring-up, before the node joins the cluster. Applies to the first join only, not to upgrades of existing nodes.
+- `volume_size` (Number) Size in GB of the volume new nodes boot from, when `boot_disk_source` is `volume`. `0` means the default size of the cloud provider. The cloud provider must allow a custom volume size. Applies only to nodes created after the change.

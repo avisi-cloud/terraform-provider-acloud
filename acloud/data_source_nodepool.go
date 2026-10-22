@@ -72,6 +72,16 @@ func dataSourceNodepool() *schema.Resource {
 				Computed:    true,
 				Description: "Install OS security updates during node bring-up, before the node joins the cluster. Applies to the first join only, not to upgrades of existing nodes.",
 			},
+			"boot_disk_source": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: bootDiskSourceDescription + " Empty for cloud providers without boot disk choices.",
+			},
+			"volume_size": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: volumeSizeDescription,
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -112,5 +122,6 @@ func dataNodepoolRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	d.Set("auto_scaling", nodePool.AutoScaling)
 	d.Set("availability_zone", nodePool.AvailabilityZone)
 	d.Set("security_updates_on_join", string(nodePool.SecurityUpdatesOnJoin))
+	setNodepoolBootDisk(d, nodePool)
 	return nil
 }
