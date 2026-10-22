@@ -35,7 +35,7 @@ func dataSourceCloudAccounts() *schema.Resource {
 			},
 			"cloud_accounts": {
 				Type:        schema.TypeList,
-				Description: "List of Cloud Accounts",
+				Description: "Cloud Accounts matching the filters, each with `name`, `slug` and `available` (whether the cloud account can be used).",
 				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{

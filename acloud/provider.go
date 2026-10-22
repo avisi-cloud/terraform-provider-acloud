@@ -16,18 +16,21 @@ func Provider() *schema.Provider {
 		Schema: map[string]*schema.Schema{
 			"token": {
 				Type:        schema.TypeString,
+				Description: "Personal Access Token for the Avisi Cloud API. Can also be set with the `ACLOUD_PERSONAL_ACCESS_TOKEN` environment variable.",
 				Required:    true,
 				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("ACLOUD_PERSONAL_ACCESS_TOKEN", nil),
 			},
 			"acloud_api": {
 				Type:        schema.TypeString,
+				Description: "Base URL of the Avisi Cloud API. Can also be set with the `ACLOUD_API_ENDPOINT` environment variable. Defaults to `https://api.avisi.cloud`.",
 				Required:    true,
 				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("ACLOUD_API_ENDPOINT", "https://api.avisi.cloud"),
 			},
 			"organisation": {
 				Type:        schema.TypeString,
+				Description: "Slug of the Organisation used when a resource or data source does not set `organisation`. Can also be set with the `ACLOUD_ORGANISATION` environment variable.",
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("ACLOUD_ORGANISATION", ""),
 			},

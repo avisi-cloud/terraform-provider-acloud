@@ -49,12 +49,14 @@ This datasource only works for Bring Your Own Node clusters.
 				Description: "Cloud Init user-data (base64)",
 			},
 			"kubelet_config": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "Kubelet configuration for the node (base64).",
+				Computed:    true,
 			},
 			"join_command": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "Command that joins the node to the cluster.",
+				Computed:    true,
 			},
 			"install_script": {
 				Type:        schema.TypeString,

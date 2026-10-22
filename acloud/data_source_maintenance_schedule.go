@@ -9,6 +9,7 @@ import (
 
 func dataSourceMaintenanceSchedule() *schema.Resource {
 	return &schema.Resource{
+		Description: "Get a maintenance schedule by its identity",
 		ReadContext: dataMaintenanceScheduleRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -18,7 +19,7 @@ func dataSourceMaintenanceSchedule() *schema.Resource {
 			"organisation": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Slug of the Organisation. Can only be set on creation.",
+				Description: "Slug of the Organisation. Required here, even when the provider sets `organisation`.",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -28,7 +29,7 @@ func dataSourceMaintenanceSchedule() *schema.Resource {
 			"windows": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "List of maintenance windows for the schedule",
+				Description: "Maintenance windows of the schedule, each with `day`, `start_time` (local time, `HH:mm`) and `duration` (in minutes).",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"day": {

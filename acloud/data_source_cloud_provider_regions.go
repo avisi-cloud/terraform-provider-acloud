@@ -20,16 +20,19 @@ func dataSourceCloudProviderRegions() *schema.Resource {
 				Computed: true,
 			},
 			"organisation": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Description: "Slug of the Organisation. Defaults to the `organisation` of the provider.",
+				Optional:    true,
 			},
 			"cloud_provider": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Description: "Slug of the cloud provider, for example `aws`.",
+				Required:    true,
 			},
 			"regions": {
-				Type:     schema.TypeList,
-				Computed: true,
+				Type:        schema.TypeList,
+				Description: "Regions of the cloud provider, each with `name`, `slug` and `available` (whether the region can be used).",
+				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {

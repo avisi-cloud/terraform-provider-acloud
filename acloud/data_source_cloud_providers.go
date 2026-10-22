@@ -19,12 +19,14 @@ func dataSourceCloudProviders() *schema.Resource {
 				Computed: true,
 			},
 			"organisation": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Description: "Slug of the Organisation. Defaults to the `organisation` of the provider.",
+				Optional:    true,
 			},
 			"cloud_providers": {
-				Type:     schema.TypeList,
-				Computed: true,
+				Type:        schema.TypeList,
+				Description: "Cloud providers available to the Organisation, each with `name`, `slug` and `available` (whether the cloud provider can be used).",
+				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
