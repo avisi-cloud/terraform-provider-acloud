@@ -1,0 +1,37 @@
+---
+page_title: "Provider: Avisi Cloud (acloud)"
+description: |-
+  Manage Avisi Managed Environments (AME) Kubernetes clusters, node pools, environments and cloud accounts on the Avisi Cloud Platform.
+---
+
+# Avisi Cloud Provider
+
+The `acloud` provider manages resources on the [Avisi Cloud Platform](https://avisi.cloud): environments,
+[Avisi Managed Environments (AME)](https://docs.avisi.cloud/docs/product/why-ame) Kubernetes clusters, node pools,
+cloud accounts and maintenance schedules. Data sources look up what already exists, such as cloud accounts,
+regions, node types and update channels.
+
+For a ready-made cluster with node pools, see the
+[`avisi-cloud/cluster/acloud`](https://registry.terraform.io/modules/avisi-cloud/cluster/acloud/latest) and
+[`avisi-cloud/nodepool/acloud`](https://registry.terraform.io/modules/avisi-cloud/nodepool/acloud/latest) modules,
+which are built on this provider.
+
+## Example Usage
+
+{{ tffile "examples/provider/provider.tf" }}
+
+## Authentication
+
+The provider logs in with a
+[Personal Access Token](https://docs.avisi.cloud/docs/product/tasks/how-to/personal-access-tokens).
+Every setting can also come from an environment variable, so no secret has to be in a `.tf` file:
+
+| Setting | Environment variable | Default |
+| --- | --- | --- |
+| `token` | `ACLOUD_PERSONAL_ACCESS_TOKEN` | required |
+| `acloud_api` | `ACLOUD_API_ENDPOINT` | `https://api.avisi.cloud` |
+| `organisation` | `ACLOUD_ORGANISATION` | none: set it here or on each resource |
+
+The organisation slug is shown on the Settings page in the [Console](https://console.avisi.cloud/).
+
+{{ .SchemaMarkdown | trimspace }}

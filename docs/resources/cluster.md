@@ -13,13 +13,25 @@ Create an Avisi Cloud Kubernetes cluster within an environment
 ## Example Usage
 
 ```terraform
-resource "acloud_cluster" "example" {
-  name                   = "example-cluster"
-  environment            = "prod"
+data "acloud_cloud_account" "aws" {
+  display_name   = "Production AWS"
+  cloud_provider = "aws"
+}
+
+data "acloud_update_channel" "stable" {
+  name = "v1.34"
+}
+
+resource "acloud_cluster" "orders" {
+  name                   = "orders"
+  environment            = acloud_environment.production.slug
+  cloud_account_identity = data.acloud_cloud_account.aws.identity
   region                 = "eu-west-1"
-  version                = "1.34"
-  cloud_account_identity = "account-1"
-  node_port_access       = "allowlist"
+  version                = data.acloud_update_channel.stable.version
+  update_channel         = data.acloud_update_channel.stable.name
+
+  enable_multi_availability_zones = true
+  node_port_access                = "allowlist"
 
   addons {
     name    = "logging"
@@ -51,21 +63,21 @@ resource "acloud_cluster" "example" {
 - `enable_multi_availability_zones` (Boolean) Enable multi availability zones for the cluster
 - `enable_network_encryption` (Boolean) Enable Network Encryption at the node level (if supported by the CNI).
 - `enable_private_cluster` (Boolean) Enable NAT gateway for the cluster. Can only be set on cluster creation.
-- `environment_slug` (String, Deprecated)
+- `environment_slug` (String, Deprecated) Deprecated: use `environment` instead.
 - `maintenance_schedule_id` (String) ID of the maintenance schedule to apply to the cluster
 - `node_port_access` (String) Where the NodePort range of the cluster nodes can be reached from. `internal`: only from the internal network of the cluster. `allowlist`: from the internal network and the IP addresses in the `ipWhitelist` of the cluster. With an empty `ipWhitelist`, only the internal network is allowed; this differs from API server access, where an empty `ipWhitelist` allows everyone. `public`: from anywhere. Applies to clusters whose nodes have public IP addresses. Defaults to `internal`.
 - `organisation` (String) Slug of the Organisation of the Cluster. Can only be set on cluster creation.
-- `organisation_slug` (String, Deprecated)
+- `organisation_slug` (String, Deprecated) Deprecated: use `organisation` instead.
 - `pod_security_standards_profile` (String) Pod Security Standards used by default within the cluster
 - `stopped` (Boolean, Deprecated) Stops the Cluster if set to true. False by default
 - `update_channel` (String) Avisi Cloud Kubernetes Update Channel that the Cluster follows
 
 ### Read-Only
 
-- `cloud_provider` (String)
+- `cloud_provider` (String) Slug of the cloud provider of the cloud account, for example `aws`.
 - `id` (String) The Cluster UUID Identity as Terraform identifier
-- `slug` (String)
-- `status` (String)
+- `slug` (String) Slug of the Cluster, set by the API.
+- `status` (String) Current status of the Cluster, for example `running` or `stopped`.
 
 <a id="nestedblock--addons"></a>
 ### Nested Schema for `addons`
