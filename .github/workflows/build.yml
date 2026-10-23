@@ -6,12 +6,63 @@ on:
   pull_request:
     branches:
       - main
+
+permissions:
+  contents: read
+
 jobs:
-  lint:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          go-version: 'stable'
-      - run: make test
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          # Installs the go.mod toolchain directive version and exports GOTOOLCHAIN=local.
+          # Do not set GOTOOLCHAIN=local before this step: setup-go then falls back to the go directive.
+          go-version-file: 'go.mod'
+          cache-dependency-path: 'go.sum'
+      - run: go version
+      - name: Check formatting
+        run: make fmtcheck
+      - name: Check go.mod and go.sum are tidy
+        run: make tidycheck
+      - name: Verify module checksums
+        run: go mod verify
+      - name: Build
+        run: make build
+      - name: Vet
+        run: make vet
+      - name: Unit tests
+        run: make test
+      - name: Unit tests with race detector
+        run: make testrace
+
+  vulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          # Installs the go.mod toolchain directive version and exports GOTOOLCHAIN=local.
+          # Do not set GOTOOLCHAIN=local before this step: setup-go then falls back to the go directive.
+          go-version-file: 'go.mod'
+          cache-dependency-path: 'go.sum'
+      - name: govulncheck
+        run: make vulncheck
+
+  goreleaser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate GoReleaser configuration
+        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
+        with:
+          # renovate: datasource=github-releases depName=goreleaser/goreleaser
+          version: v2.18.3
+          args: check
