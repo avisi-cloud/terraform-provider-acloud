@@ -1,34 +1,31 @@
-# Example: Provider
+# Provider configuration
 
-Base provider example
+The smallest working setup: the `acloud` provider block, with the Personal Access Token as a sensitive
+variable. This file is also the example on the provider page in the Terraform Registry.
 
-## Requirements
+## What it creates
 
-| Name | Version |
-|------|---------|
-| <a name="requirement_acloud"></a> [acloud](#requirement\_acloud) | >= 0.1 |
+Nothing. It only configures the provider, so `terraform plan` shows no changes once the token is valid.
 
-## Providers
+## The interesting bits
 
-| Name | Version |
-|------|---------|
-| <a name="provider_acloud"></a> [acloud](#provider\_acloud) | 0.1.5 |
+```hcl
+provider "acloud" {
+  token        = var.acloud_token
+  organisation = "example-org" # used by every resource and data source that doesn't set its own
+}
+```
 
-## Modules
+- `token` can also come from `ACLOUD_PERSONAL_ACCESS_TOKEN`. Then you can leave `token` out entirely.
+- `organisation` saves setting `organisation` on every resource. It can also come from `ACLOUD_ORGANISATION`.
+- `acloud_api` is only needed for a non-public API; it defaults to `https://api.avisi.cloud`.
 
-No modules.
+## Run it
 
-## Resources
+```bash
+terraform init
+terraform plan -var="acloud_token=$ACLOUD_PERSONAL_ACCESS_TOKEN"
+```
 
-No resources.
-
-## Inputs
-
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| <a name="input_acloud_api"></a> [acloud\_api](#input\_acloud\_api) | n/a | `any` | n/a | yes |
-| <a name="input_acloud_token"></a> [acloud\_token](#input\_acloud\_token) | n/a | `any` | n/a | yes |
-
-## Outputs
-
-No outputs.
+Create a token under API Access in the [Console](https://console.avisi.cloud/), see
+[Personal Access Tokens](https://docs.avisi.cloud/docs/product/tasks/how-to/personal-access-tokens).

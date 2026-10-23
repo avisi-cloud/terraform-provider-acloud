@@ -3,12 +3,12 @@
 page_title: "acloud_nodepool Data Source - terraform-provider-acloud"
 subcategory: ""
 description: |-
-  
+  Get a node pool of a cluster
 ---
 
 # acloud_nodepool (Data Source)
 
-
+Get a node pool of a cluster
 
 
 
@@ -24,15 +24,15 @@ description: |-
 ### Optional
 
 - `availability_zone` (String) Availability Zone in which the nodes was provisioned.
-- `cluster_slug` (String, Deprecated)
-- `environment_slug` (String, Deprecated)
-- `organisation_slug` (String, Deprecated)
+- `cluster_slug` (String, Deprecated) Deprecated: use `cluster` instead.
+- `environment_slug` (String, Deprecated) Deprecated: use `environment` instead.
+- `organisation_slug` (String, Deprecated) Deprecated: use `organisation` instead.
 
 ### Read-Only
 
 - `boot_disk_source` (String) What new nodes boot from. `volume`: a separate volume of `volume_size` GB. `node-type-disk`: the disk that comes with the node type, without a separate volume; the cloud provider must allow it. Only supported on OpenStack. Applies only to nodes created after the change. Empty for cloud providers without boot disk choices.
 - `id` (String) The ID of this resource.
-- `identity` (String)
+- `identity` (String) Identity (UUID) of the Node Pool.
 - `name` (String) Name of the Node Pool
 - `security_updates_on_join` (String) Install OS security updates during node bring-up, before the node joins the cluster. Applies to the first join only, not to upgrades of existing nodes.
 - `volume_size` (Number) Size in GB of the volume new nodes boot from, when `boot_disk_source` is `volume`. `0` means the default size of the cloud provider. The cloud provider must allow a custom volume size. Applies only to nodes created after the change.

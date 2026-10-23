@@ -30,10 +30,11 @@ func resourceEnvironment() *schema.Resource {
 				Description: "Slug of the Organisation. Can only be set on creation.",
 			},
 			"organisation_slug": {
-				Type:       schema.TypeString,
-				Deprecated: "replaced by organisation",
-				Optional:   true,
-				Default:    nil,
+				Type:        schema.TypeString,
+				Description: "Deprecated: use `organisation` instead.",
+				Deprecated:  "replaced by organisation",
+				Optional:    true,
+				Default:     nil,
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -41,8 +42,9 @@ func resourceEnvironment() *schema.Resource {
 				Description: "Name of the Environment",
 			},
 			"slug": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "Slug of the Environment, set by the API.",
+				Computed:    true,
 			},
 			"purpose": {
 				Type:        schema.TypeString,

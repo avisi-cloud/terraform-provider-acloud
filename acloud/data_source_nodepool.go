@@ -14,6 +14,7 @@ import (
 
 func dataSourceNodepool() *schema.Resource {
 	return &schema.Resource{
+		Description: "Get a node pool of a cluster",
 		ReadContext: dataNodepoolRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -21,8 +22,9 @@ func dataSourceNodepool() *schema.Resource {
 				Computed: true,
 			},
 			"identity": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "Identity (UUID) of the Node Pool.",
+				Computed:    true,
 			},
 			"organisation": {
 				Type:        schema.TypeString,
@@ -40,22 +42,25 @@ func dataSourceNodepool() *schema.Resource {
 				Description: "Slug of the Cluster.",
 			},
 			"organisation_slug": {
-				Type:       schema.TypeString,
-				Deprecated: "replaced by organisation",
-				Optional:   true,
-				Default:    nil,
+				Type:        schema.TypeString,
+				Description: "Deprecated: use `organisation` instead.",
+				Deprecated:  "replaced by organisation",
+				Optional:    true,
+				Default:     nil,
 			},
 			"environment_slug": {
-				Type:       schema.TypeString,
-				Deprecated: "replaced by environment",
-				Optional:   true,
-				Default:    nil,
+				Type:        schema.TypeString,
+				Description: "Deprecated: use `environment` instead.",
+				Deprecated:  "replaced by environment",
+				Optional:    true,
+				Default:     nil,
 			},
 			"cluster_slug": {
-				Type:       schema.TypeString,
-				Deprecated: "replaced by cluster",
-				Optional:   true,
-				Default:    nil,
+				Type:        schema.TypeString,
+				Description: "Deprecated: use `cluster` instead.",
+				Deprecated:  "replaced by cluster",
+				Optional:    true,
+				Default:     nil,
 			},
 			"name": {
 				Type:        schema.TypeString,

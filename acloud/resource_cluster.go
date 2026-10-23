@@ -53,16 +53,18 @@ func resourceCluster() *schema.Resource {
 				Description: "Slug of the Environment of the Cluster. Can only be set on cluster creation.",
 			},
 			"organisation_slug": {
-				Type:       schema.TypeString,
-				Deprecated: "replaced by organisation",
-				Optional:   true,
-				Default:    nil,
+				Type:        schema.TypeString,
+				Description: "Deprecated: use `organisation` instead.",
+				Deprecated:  "replaced by organisation",
+				Optional:    true,
+				Default:     nil,
 			},
 			"environment_slug": {
-				Type:       schema.TypeString,
-				Deprecated: "replaced by environment",
-				Optional:   true,
-				Default:    nil,
+				Type:        schema.TypeString,
+				Description: "Deprecated: use `environment` instead.",
+				Deprecated:  "replaced by environment",
+				Optional:    true,
+				Default:     nil,
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -70,8 +72,9 @@ func resourceCluster() *schema.Resource {
 				Description: "Description of the Cluster",
 			},
 			"slug": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "Slug of the Cluster, set by the API.",
+				Computed:    true,
 			},
 			"cni": {
 				Type:        schema.TypeString,
@@ -79,8 +82,9 @@ func resourceCluster() *schema.Resource {
 				Description: "CNI plugin for Kubernetes",
 			},
 			"cloud_provider": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "Slug of the cloud provider of the cloud account, for example `aws`.",
+				Computed:    true,
 			},
 			"region": {
 				Type:        schema.TypeString,
@@ -181,8 +185,9 @@ func resourceCluster() *schema.Resource {
 				Description: "Enable auto-upgrade for the cluster",
 			},
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "Current status of the Cluster, for example `running` or `stopped`.",
+				Computed:    true,
 			},
 			"stopped": {
 				Type:        schema.TypeBool,

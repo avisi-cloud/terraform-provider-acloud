@@ -18,8 +18,9 @@ func dataSourceCloudAccount() *schema.Resource {
 				Computed: true,
 			},
 			"identity": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "Identity (UUID) of the Cloud Account.",
+				Computed:    true,
 			},
 			"display_name": {
 				Type:        schema.TypeString,

@@ -10,6 +10,7 @@ import (
 
 func dataSourceCluster() *schema.Resource {
 	return &schema.Resource{
+		Description: "Get a cluster in an environment",
 		ReadContext: dataClusterRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -105,7 +106,7 @@ func dataSourceCluster() *schema.Resource {
 			"addons": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "Add-ons configured for the cluster",
+				Description: "Add-ons configured for the cluster, each with `name`, `enabled` and `custom_values`.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {

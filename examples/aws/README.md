@@ -1,47 +1,53 @@
-# Example: AWS
+# Cluster on AWS
 
-Example for using the `acloud` Terraform Provider with an AWS cloud account.
+A demo environment with one AME Kubernetes cluster in `eu-west-1` and one worker node pool, on an AWS cloud
+account that already exists in the Console.
 
-This requires that you have provisioned a Cloud Account within your Avisi Cloud Console. See [documentation](https://docs.avisi.cloud/docs/how-to/cloud-accounts/aws/create-aws-account/).
+## What it creates
 
-## Requirements
+| | |
+| --- | --- |
+| `acloud_environment` | 1, type `demo` |
+| `acloud_cluster` | 1, in `eu-west-1`, Kubernetes version from the `v1.34` update channel |
+| `acloud_nodepool` | 1, **1** × `t3.small`, label `role=worker` |
+| Output `cluster_identity` | The identity (UUID) of the cluster |
 
-| Name | Version |
-|------|---------|
-| <a name="requirement_acloud"></a> [acloud](#requirement\_acloud) | >= 0.1 |
+It reads two things that must already exist: the AWS cloud account (by display name) and the update channel.
 
-## Providers
+## The interesting bits
 
-| Name | Version |
-|------|---------|
-| <a name="provider_acloud"></a> [acloud](#provider\_acloud) | 0.1.5 |
+```hcl
+data "acloud_update_channel" "channel" {
+  name = "v1.34"
+}
 
-## Modules
+resource "acloud_cluster" "demo" {
+  environment            = acloud_environment.demo.slug
+  version                = data.acloud_update_channel.channel.version
+  update_channel         = data.acloud_update_channel.channel.name
+  cloud_account_identity = data.acloud_cloud_account.aws.identity
+  # ...
+}
+```
 
-No modules.
+The update channel sets both the Kubernetes version and the channel the cluster follows for patch releases, so
+the version doesn't have to be typed twice.
 
-## Resources
+`security_updates_on_join = "INSTALL_AND_REBOOT"` on the node pool installs OS security updates on a new node,
+and reboots it if needed, before it joins the cluster.
 
-| Name | Type |
-|------|------|
-| [acloud_cluster.demo_cluster](https://registry.terraform.io/providers/avisi-cloud/acloud/latest/docs/resources/cluster) | resource |
-| [acloud_environment.demo](https://registry.terraform.io/providers/avisi-cloud/acloud/latest/docs/resources/environment) | resource |
-| [acloud_nodepool.workers](https://registry.terraform.io/providers/avisi-cloud/acloud/latest/docs/resources/nodepool) | resource |
-| [acloud_cloud_account.demo](https://registry.terraform.io/providers/avisi-cloud/acloud/latest/docs/data-sources/cloud_account) | data source |
-| [acloud_update_channel.channel](https://registry.terraform.io/providers/avisi-cloud/acloud/latest/docs/data-sources/update_channel) | data source |
+## Run it
 
-## Inputs
+1. Create an AWS cloud account in the Console, see
+   [Create an AWS cloud account](https://docs.avisi.cloud/docs/how-to/cloud-accounts/aws/create-aws-account/).
+2. Plan and apply with your token and organisation:
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| <a name="input_acloud_api"></a> [acloud\_api](#input\_acloud\_api) | Avisi Cloud Platform API endpoint. This is optional. | `any` | n/a | yes |
-| <a name="input_acloud_token"></a> [acloud\_token](#input\_acloud\_token) | Your Avisi Cloud Personal Access Token | `any` | n/a | yes |
-| <a name="input_cloud_account_name"></a> [cloud\_account\_name](#input\_cloud\_account\_name) | Name of the cloud account that will be used | `string` | n/a | yes |
-| <a name="input_environment"></a> [environment](#input\_environment) | Name of the environment that will be provisioned | `any` | n/a | yes |
-| <a name="input_organisation"></a> [organisation](#input\_organisation) | Slug of your organisation within the Avisi Cloud Platform | `any` | n/a | yes |
+   ```bash
+   terraform init
+   terraform apply \
+     -var="acloud_token=$ACLOUD_PERSONAL_ACCESS_TOKEN" \
+     -var="organisation=example-org" \
+     -var="cloud_account_name=AWS Account"
+   ```
 
-## Outputs
-
-| Name | Description |
-|------|-------------|
-| <a name="output_cluster_identity"></a> [cluster\_identity](#output\_cluster\_identity) | n/a |
+`terraform destroy` removes the node pool, the cluster and the environment again. The cloud account stays.

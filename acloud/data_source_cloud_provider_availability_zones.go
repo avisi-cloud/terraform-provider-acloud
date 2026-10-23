@@ -10,7 +10,7 @@ import (
 
 func dataSourceCloudProviderAvailabilityZones() *schema.Resource {
 	return &schema.Resource{
-		Description: "List all availablility zones for a given cloud region",
+		Description: "List all availability zones for a given cloud region",
 		ReadContext: dataSourceCloudProviderAvailabilityZonesRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -18,20 +18,24 @@ func dataSourceCloudProviderAvailabilityZones() *schema.Resource {
 				Computed: true,
 			},
 			"organisation": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Description: "Slug of the Organisation. Defaults to the `organisation` of the provider.",
+				Optional:    true,
 			},
 			"cloud_provider": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Description: "Slug of the cloud provider, for example `aws`.",
+				Required:    true,
 			},
 			"region": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Description: "Slug of the region, for example `eu-west-1`.",
+				Required:    true,
 			},
 			"availability_zones": {
-				Type:     schema.TypeList,
-				Computed: true,
+				Type:        schema.TypeList,
+				Description: "Slugs of the availability zones in the region.",
+				Computed:    true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},

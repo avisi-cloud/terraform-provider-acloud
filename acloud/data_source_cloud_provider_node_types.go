@@ -19,12 +19,14 @@ func dataSourceCloudProviderNodeTypes() *schema.Resource {
 				Computed: true,
 			},
 			"cloud_provider": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Description: "Slug of the cloud provider, for example `aws`.",
+				Required:    true,
 			},
 			"node_types": {
-				Type:     schema.TypeList,
-				Computed: true,
+				Type:        schema.TypeList,
+				Description: "Node types of the cloud provider, each with `type` (the name to use as `node_size`), `cpu` (number of CPUs) and `memory` (in MB).",
+				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {

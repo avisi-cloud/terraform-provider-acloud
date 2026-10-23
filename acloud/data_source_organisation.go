@@ -18,16 +18,19 @@ func dataSourceOrganisations() *schema.Resource {
 				Computed: true,
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "Name of the Organisation.",
+				Computed:    true,
 			},
 			"slug": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Description: "Slug of the Organisation. Defaults to the `organisation` of the provider.",
+				Optional:    true,
 			},
 			"email": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "Contact email address of the Organisation.",
+				Computed:    true,
 			},
 		},
 	}
