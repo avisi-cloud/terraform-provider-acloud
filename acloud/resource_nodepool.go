@@ -20,6 +20,7 @@ func resourceNodepool() *schema.Resource {
 		ReadContext:   resourceNodepoolRead,
 		UpdateContext: resourceNodepoolUpdate,
 		DeleteContext: resourceNodepoolDelete,
+		CustomizeDiff: customizeNodepoolBootDiskDiff,
 		Schema: map[string]*schema.Schema{
 			"id": {
 				Type:     schema.TypeString,
@@ -138,6 +139,20 @@ func resourceNodepool() *schema.Resource {
 					string(acloudapi.NodePoolSecurityUpdatesOnJoinInstallAndReboot),
 				}, false),
 			},
+			"boot_disk_source": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				Description:  bootDiskSourceDescription + " When not set, the cloud provider's base source is used, and removing the attribute keeps the current value.",
+				ValidateFunc: validation.StringInSlice(bootDiskSourceValues(), false),
+			},
+			"volume_size": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				Description:  volumeSizeDescription + " Leave it out for the default size: the API stores the default size as not set, so configuring the default size itself (50) shows a diff on every plan. Can not be combined with `boot_disk_source = \"node-type-disk\"`.",
+				ValidateFunc: validation.IntAtLeast(1),
+			},
 			"annotations": {
 				Type:        schema.TypeMap,
 				Optional:    true,
@@ -185,6 +200,50 @@ func resourceNodepool() *schema.Resource {
 	}
 }
 
+const bootDiskSourceDescription = "What new nodes boot from. " +
+	"`volume`: a separate volume of `volume_size` GB. " +
+	"`node-type-disk`: the disk that comes with the node type, without a separate volume; the cloud provider must allow it. " +
+	"Only supported on OpenStack. Applies only to nodes created after the change."
+
+const volumeSizeDescription = "Size in GB of the volume new nodes boot from, when `boot_disk_source` is `volume`. " +
+	"`0` means the default size of the cloud provider. The cloud provider must allow a custom volume size. " +
+	"Applies only to nodes created after the change."
+
+func bootDiskSourceValues() []string {
+	values := make([]string, 0, len(acloudapi.AllNodePoolBootDiskSources))
+	for _, bootDiskSource := range acloudapi.AllNodePoolBootDiskSources {
+		values = append(values, string(bootDiskSource))
+	}
+	return values
+}
+
+// customizeNodepoolBootDiskDiff refuses a volume size with the node type disk, because the API would silently drop it.
+func customizeNodepoolBootDiskDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+	config := d.GetRawConfig()
+	if config.IsNull() {
+		return nil
+	}
+	bootDiskSource := config.GetAttr("boot_disk_source")
+	volumeSizeConfigured := !config.GetAttr("volume_size").IsNull()
+	if volumeSizeConfigured && bootDiskSource.IsKnown() && !bootDiskSource.IsNull() && bootDiskSource.AsString() == string(acloudapi.NodePoolBootDiskSourceNodeTypeDisk) {
+		return fmt.Errorf("volume_size can not be used with boot_disk_source %q", acloudapi.NodePoolBootDiskSourceNodeTypeDisk)
+	}
+	// A new source without a configured size gets its size from the API, e.g. none for the node type disk.
+	if d.Id() != "" && d.HasChange("boot_disk_source") && !volumeSizeConfigured {
+		return d.SetNewComputed("volume_size")
+	}
+	return nil
+}
+
+func setNodepoolBootDisk(d *schema.ResourceData, nodePool acloudapi.NodePool) {
+	d.Set("boot_disk_source", string(nodePool.BootDiskSource))
+	volumeSize := 0
+	if nodePool.VolumeSize != nil {
+		volumeSize = *nodePool.VolumeSize
+	}
+	d.Set("volume_size", volumeSize)
+}
+
 func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	provider := getProvider(m)
 	client := provider.Client
@@ -214,6 +273,19 @@ func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(fmt.Errorf("cannot parse securityUpdatesOnJoin: %w", err))
 	}
 
+	// Not configured is "" or 0 (the validation refuses both as values), and then left out: the API picks the defaults.
+	var bootDiskSource acloudapi.NodePoolBootDiskSource
+	if value := d.Get("boot_disk_source").(string); value != "" {
+		bootDiskSource, err = acloudapi.ParseNodePoolBootDiskSource(value)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("cannot parse bootDiskSource: %w", err))
+		}
+	}
+	var volumeSize *int
+	if size := d.Get("volume_size").(int); size != 0 {
+		volumeSize = &size
+	}
+
 	createNodepool := acloudapi.CreateNodePool{
 		Name:     d.Get("name").(string),
 		NodeSize: d.Get("node_size").(string),
@@ -229,6 +301,8 @@ func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m inter
 		NodeAutoReplacement:   d.Get("node_auto_replacement").(bool),
 		UpgradeStrategy:       upgradeStrategy,
 		SecurityUpdatesOnJoin: securityUpdatesOnJoin,
+		BootDiskSource:        bootDiskSource,
+		VolumeSize:            volumeSize,
 	}
 
 	nodePool, err := client.CreateNodePool(ctx, *cluster, createNodepool)
@@ -239,6 +313,7 @@ func resourceNodepoolCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	if nodePool != nil {
 		d.SetId(strconv.Itoa(nodePool.ID))
+		setNodepoolBootDisk(d, *nodePool)
 		return nil
 	}
 
@@ -338,6 +413,7 @@ func resourceNodepoolRead(ctx context.Context, d *schema.ResourceData, m interfa
 	d.Set("labels", labels)
 	d.Set("taints", nodePool.Taints)
 	d.Set("security_updates_on_join", string(nodePool.SecurityUpdatesOnJoin))
+	setNodepoolBootDisk(d, nodePool)
 	return nil
 }
 
@@ -357,6 +433,19 @@ func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(fmt.Errorf("cannot parse securityUpdatesOnJoin: %w", err))
 	}
 
+	// Only send a changed boot disk setting; left out, the API keeps the stored value. A size that is "known after apply" reads as 0.
+	var bootDiskSource acloudapi.NodePoolBootDiskSource
+	if value := d.Get("boot_disk_source").(string); d.HasChange("boot_disk_source") && value != "" {
+		bootDiskSource, err = acloudapi.ParseNodePoolBootDiskSource(value)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("cannot parse bootDiskSource: %w", err))
+		}
+	}
+	var volumeSize *int
+	if size := d.Get("volume_size").(int); d.HasChange("volume_size") && size != 0 {
+		volumeSize = &size
+	}
+
 	updateNodepool := acloudapi.CreateNodePool{
 		NodeSize:              d.Get("node_size").(string),
 		MinSize:               d.Get("min_size").(int),
@@ -365,6 +454,8 @@ func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		Labels:                castInterfaceMap(d.Get("labels").(map[string]interface{})),
 		Taints:                castNodeTaints(d.Get("taints").([]interface{})),
 		SecurityUpdatesOnJoin: securityUpdatesOnJoin,
+		BootDiskSource:        bootDiskSource,
+		VolumeSize:            volumeSize,
 	}
 
 	nodePool, err := client.UpdateNodePool(ctx, *cluster, nodePoolID, updateNodepool)
@@ -381,6 +472,7 @@ func resourceNodepoolUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		d.Set("annotations", nodePool.Annotations)
 		d.Set("labels", nodePool.Labels)
 		d.Set("security_updates_on_join", string(nodePool.SecurityUpdatesOnJoin))
+		setNodepoolBootDisk(d, *nodePool)
 		return nil
 	}
 
