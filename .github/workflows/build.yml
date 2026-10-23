@@ -15,7 +15,7 @@ jobs:
         with:
           go-version: 'stable'
       # terraform fmt for the examples, and tfplugindocs uses terraform to read the provider schema.
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_wrapper: false
       - run: make fmt-check
