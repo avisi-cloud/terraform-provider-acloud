@@ -34,5 +34,5 @@ Get a node pool of a cluster
 - `id` (String) The ID of this resource.
 - `identity` (String) Identity (UUID) of the Node Pool.
 - `name` (String) Name of the Node Pool
-- `security_updates_on_join` (String) Install OS security updates during node bring-up, before the node joins the cluster. Applies to the first join only, not to upgrades of existing nodes.
+- `security_updates_on_join` (String) Which OS package updates a new node installs during bring-up, before it joins the cluster. `OFF`: no updates (default). `INSTALL`: the security updates only. `INSTALL_AND_REBOOT`: like `INSTALL`, then reboots the node when the updates require it. `UPGRADE`: all pending package updates, including non-security updates. `UPGRADE_AND_REBOOT`: like `UPGRADE`, then reboots the node when the updates require it. Applies only when a node first joins, not to in-place upgrades of existing nodes.
 - `volume_size` (Number) Size in GB of the volume new nodes boot from, when `boot_disk_source` is `volume`. `0` means the default size of the cloud provider. The cloud provider must allow a custom volume size. Applies only to nodes created after the change.

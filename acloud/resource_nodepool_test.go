@@ -28,12 +28,13 @@ type fakeNodePoolAPI struct {
 	t      *testing.T
 	server *httptest.Server
 
-	mu             sync.Mutex
-	bootDiskSource acloudapi.NodePoolBootDiskSource
-	volumeSize     *int
-	requests       int
-	createBodies   []map[string]json.RawMessage
-	updateBodies   []map[string]json.RawMessage
+	mu                    sync.Mutex
+	bootDiskSource        acloudapi.NodePoolBootDiskSource
+	volumeSize            *int
+	securityUpdatesOnJoin acloudapi.NodePoolSecurityUpdatesOnJoin
+	requests              int
+	createBodies          []map[string]json.RawMessage
+	updateBodies          []map[string]json.RawMessage
 }
 
 func newFakeNodePoolAPI(t *testing.T) *fakeNodePoolAPI {
@@ -95,7 +96,7 @@ func (api *fakeNodePoolAPI) record(r *http.Request, bodies *[]map[string]json.Ra
 	return body
 }
 
-// apply stores the sent boot disk settings; like platform-api, choosing the node type disk clears the size.
+// apply stores the sent boot disk and join update settings; like platform-api, choosing the node type disk clears the size.
 func (api *fakeNodePoolAPI) apply(body map[string]json.RawMessage) {
 	api.mu.Lock()
 	defer api.mu.Unlock()
@@ -120,20 +121,32 @@ func (api *fakeNodePoolAPI) apply(body map[string]json.RawMessage) {
 		}
 		api.volumeSize = &value
 	}
+	if raw, ok := body["securityUpdatesOnJoin"]; ok {
+		var value string
+		if err := json.Unmarshal(raw, &value); err != nil {
+			api.t.Errorf("securityUpdatesOnJoin in request body is not a string: %s", raw)
+		}
+		securityUpdatesOnJoin, err := acloudapi.ParseNodePoolSecurityUpdatesOnJoin(value)
+		if err != nil {
+			api.t.Errorf("invalid securityUpdatesOnJoin in request body: %v", err)
+		}
+		api.securityUpdatesOnJoin = securityUpdatesOnJoin
+	}
 }
 
 func (api *fakeNodePoolAPI) nodePool() acloudapi.NodePool {
 	api.mu.Lock()
 	defer api.mu.Unlock()
 	return acloudapi.NodePool{
-		ID:             testNodePoolID,
-		Identity:       "nodepool-uuid",
-		Name:           "workers",
-		NodeSize:       "s5.small",
-		MinSize:        1,
-		MaxSize:        1,
-		BootDiskSource: api.bootDiskSource,
-		VolumeSize:     api.volumeSize,
+		ID:                    testNodePoolID,
+		Identity:              "nodepool-uuid",
+		Name:                  "workers",
+		NodeSize:              "s5.small",
+		MinSize:               1,
+		MaxSize:               1,
+		BootDiskSource:        api.bootDiskSource,
+		VolumeSize:            api.volumeSize,
+		SecurityUpdatesOnJoin: api.securityUpdatesOnJoin,
 	}
 }
 
@@ -490,6 +503,133 @@ func TestResourceNodepoolBootDiskNotConfiguredDiff(t *testing.T) {
 				if attr := diff.Attributes[attribute]; attr != nil && (attr.Old != attr.New || attr.NewComputed) {
 					t.Fatalf("expected no diff for %s when it is not configured, got %#v", attribute, attr)
 				}
+			}
+		})
+	}
+}
+
+func TestResourceNodepoolSecurityUpdatesOnJoinValidation(t *testing.T) {
+	for _, value := range []string{"", "off", "REBOOT", "INSTALL_AND_UPGRADE"} {
+		t.Run(fmt.Sprintf("invalid %q", value), func(t *testing.T) {
+			diags := Provider().ValidateResource("acloud_nodepool", terraform.NewResourceConfigRaw(nodepoolConfig(map[string]interface{}{"security_updates_on_join": value})))
+			if !diags.HasError() {
+				t.Fatalf("expected %q to be rejected", value)
+			}
+			if got := fmt.Sprint(diags); !strings.Contains(got, "security_updates_on_join") {
+				t.Fatalf("expected an error about security_updates_on_join, got %v", got)
+			}
+		})
+	}
+
+	for _, value := range []string{"OFF", "INSTALL", "INSTALL_AND_REBOOT", "UPGRADE", "UPGRADE_AND_REBOOT"} {
+		t.Run("valid "+value, func(t *testing.T) {
+			diags := Provider().ValidateResource("acloud_nodepool", terraform.NewResourceConfigRaw(nodepoolConfig(map[string]interface{}{"security_updates_on_join": value})))
+			if diags.HasError() {
+				t.Fatalf("expected %q to be valid, got %v", value, diags)
+			}
+		})
+	}
+}
+
+func TestResourceNodepoolCreateSecurityUpdatesOnJoin(t *testing.T) {
+	tests := []struct {
+		name   string
+		config map[string]interface{}
+		want   string
+	}{
+		{name: "not configured sends OFF", config: nodepoolConfig(nil), want: "OFF"},
+		{name: "INSTALL", config: nodepoolConfig(map[string]interface{}{"security_updates_on_join": "INSTALL"}), want: "INSTALL"},
+		{name: "INSTALL_AND_REBOOT", config: nodepoolConfig(map[string]interface{}{"security_updates_on_join": "INSTALL_AND_REBOOT"}), want: "INSTALL_AND_REBOOT"},
+		{name: "UPGRADE", config: nodepoolConfig(map[string]interface{}{"security_updates_on_join": "UPGRADE"}), want: "UPGRADE"},
+		{name: "UPGRADE_AND_REBOOT", config: nodepoolConfig(map[string]interface{}{"security_updates_on_join": "UPGRADE_AND_REBOOT"}), want: "UPGRADE_AND_REBOOT"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			api := newFakeNodePoolAPI(t)
+			d := schema.TestResourceDataRaw(t, resourceNodepool().Schema, tt.config)
+
+			if diags := resourceNodepoolCreate(context.Background(), d, api.meta()); diags.HasError() {
+				t.Fatalf("unexpected error: %v", diags)
+			}
+			if len(api.createBodies) != 1 {
+				t.Fatalf("expected 1 create request, got %d", len(api.createBodies))
+			}
+			assertJSONKey(t, api.createBodies[0], "securityUpdatesOnJoin", `"`+tt.want+`"`)
+			if got := d.Get("security_updates_on_join").(string); got != tt.want {
+				t.Fatalf("security_updates_on_join in state after create = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestResourceNodepoolReadSecurityUpdatesOnJoin(t *testing.T) {
+	for _, value := range acloudapi.AllNodePoolSecurityUpdatesOnJoin {
+		t.Run(string(value), func(t *testing.T) {
+			api := newFakeNodePoolAPI(t)
+			api.securityUpdatesOnJoin = value
+
+			d := resourceNodepool().Data(nodepoolState(t, "", 0))
+			if diags := resourceNodepoolRead(context.Background(), d, api.meta()); diags.HasError() {
+				t.Fatalf("unexpected error: %v", diags)
+			}
+			ds := schema.TestResourceDataRaw(t, dataSourceNodepool().Schema, map[string]interface{}{
+				"id":          strconv.Itoa(testNodePoolID),
+				"environment": testEnvironment,
+				"cluster":     testClusterSlug,
+			})
+			if diags := dataNodepoolRead(context.Background(), ds, api.meta()); diags.HasError() {
+				t.Fatalf("unexpected error: %v", diags)
+			}
+
+			for kind, data := range map[string]*schema.ResourceData{"resource": d, "data source": ds} {
+				if got := data.Get("security_updates_on_join").(string); got != string(value) {
+					t.Fatalf("%s security_updates_on_join = %q, want %q", kind, got, value)
+				}
+			}
+		})
+	}
+}
+
+func TestResourceNodepoolUpdateSecurityUpdatesOnJoin(t *testing.T) {
+	tests := []struct {
+		from acloudapi.NodePoolSecurityUpdatesOnJoin
+		to   acloudapi.NodePoolSecurityUpdatesOnJoin
+	}{
+		{from: acloudapi.NodePoolSecurityUpdatesOnJoinOff, to: acloudapi.NodePoolSecurityUpdatesOnJoinUpgrade},
+		{from: acloudapi.NodePoolSecurityUpdatesOnJoinInstall, to: acloudapi.NodePoolSecurityUpdatesOnJoinUpgradeAndReboot},
+		{from: acloudapi.NodePoolSecurityUpdatesOnJoinUpgradeAndReboot, to: acloudapi.NodePoolSecurityUpdatesOnJoinInstallAndReboot},
+		{from: acloudapi.NodePoolSecurityUpdatesOnJoinUpgrade, to: acloudapi.NodePoolSecurityUpdatesOnJoinOff},
+	}
+	for _, tt := range tests {
+		t.Run(string(tt.from)+" to "+string(tt.to), func(t *testing.T) {
+			r := resourceNodepool()
+			api := newFakeNodePoolAPI(t)
+			api.securityUpdatesOnJoin = tt.from
+			meta := api.meta()
+
+			state := nodepoolState(t, "", 0)
+			state.Attributes["security_updates_on_join"] = string(tt.from)
+			diff, err := planNodepool(t, state, nodepoolConfig(map[string]interface{}{"security_updates_on_join": string(tt.to)}), meta)
+			if err != nil {
+				t.Fatalf("unexpected plan error: %v", err)
+			}
+			if diff == nil || diff.Empty() {
+				t.Fatal("expected a diff")
+			}
+			if diff.RequiresNew() {
+				t.Fatalf("expected an in-place update, got a replacement: %v", diff)
+			}
+
+			newState, diags := r.Apply(context.Background(), state, diff, meta)
+			if diags.HasError() {
+				t.Fatalf("unexpected apply error: %v", diags)
+			}
+			if len(api.updateBodies) != 1 {
+				t.Fatalf("expected 1 update request, got %d", len(api.updateBodies))
+			}
+			assertJSONKey(t, api.updateBodies[0], "securityUpdatesOnJoin", `"`+string(tt.to)+`"`)
+			if got := newState.Attributes["security_updates_on_join"]; got != string(tt.to) {
+				t.Fatalf("security_updates_on_join in state after update = %q, want %q", got, tt.to)
 			}
 		})
 	}

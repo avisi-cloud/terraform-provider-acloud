@@ -129,15 +129,11 @@ func resourceNodepool() *schema.Resource {
 				}, false),
 			},
 			"security_updates_on_join": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     string(acloudapi.NodePoolSecurityUpdatesOnJoinOff),
-				Description: "Install OS security updates during node bring-up, before the node joins the cluster. Applies to the first join only, not to upgrades of existing nodes.",
-				ValidateFunc: validation.StringInSlice([]string{
-					string(acloudapi.NodePoolSecurityUpdatesOnJoinOff),
-					string(acloudapi.NodePoolSecurityUpdatesOnJoinInstall),
-					string(acloudapi.NodePoolSecurityUpdatesOnJoinInstallAndReboot),
-				}, false),
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      string(acloudapi.NodePoolSecurityUpdatesOnJoinOff),
+				Description:  securityUpdatesOnJoinDescription,
+				ValidateFunc: validation.StringInSlice(securityUpdatesOnJoinValues(), false),
 			},
 			"boot_disk_source": {
 				Type:         schema.TypeString,
@@ -208,6 +204,22 @@ const bootDiskSourceDescription = "What new nodes boot from. " +
 const volumeSizeDescription = "Size in GB of the volume new nodes boot from, when `boot_disk_source` is `volume`. " +
 	"`0` means the default size of the cloud provider. The cloud provider must allow a custom volume size. " +
 	"Applies only to nodes created after the change."
+
+const securityUpdatesOnJoinDescription = "Which OS package updates a new node installs during bring-up, before it joins the cluster. " +
+	"`OFF`: no updates (default). " +
+	"`INSTALL`: the security updates only. " +
+	"`INSTALL_AND_REBOOT`: like `INSTALL`, then reboots the node when the updates require it. " +
+	"`UPGRADE`: all pending package updates, including non-security updates. " +
+	"`UPGRADE_AND_REBOOT`: like `UPGRADE`, then reboots the node when the updates require it. " +
+	"Applies only when a node first joins, not to in-place upgrades of existing nodes."
+
+func securityUpdatesOnJoinValues() []string {
+	values := make([]string, 0, len(acloudapi.AllNodePoolSecurityUpdatesOnJoin))
+	for _, securityUpdatesOnJoin := range acloudapi.AllNodePoolSecurityUpdatesOnJoin {
+		values = append(values, string(securityUpdatesOnJoin))
+	}
+	return values
+}
 
 func bootDiskSourceValues() []string {
 	values := make([]string, 0, len(acloudapi.AllNodePoolBootDiskSources))

@@ -75,7 +75,7 @@ func dataSourceNodepool() *schema.Resource {
 			"security_updates_on_join": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Install OS security updates during node bring-up, before the node joins the cluster. Applies to the first join only, not to upgrades of existing nodes.",
+				Description: securityUpdatesOnJoinDescription,
 			},
 			"boot_disk_source": {
 				Type:        schema.TypeString,
