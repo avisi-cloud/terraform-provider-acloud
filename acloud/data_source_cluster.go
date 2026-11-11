@@ -48,6 +48,11 @@ func dataSourceCluster() *schema.Resource {
 				Computed:    true,
 				Description: "CNI plugin for Kubernetes",
 			},
+			"type": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: clusterTypeDescription,
+			},
 			"cloud_provider": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -157,6 +162,7 @@ func dataClusterRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	d.Set("cloud_account_identity", cluster.CloudAccount.Identity)
 	d.Set("delete_protection", cluster.DeleteProtection)
 	d.Set("cloud_provider", cluster.CloudProvider)
+	d.Set("type", string(cluster.Type))
 	d.Set("region", cluster.Region)
 	d.Set("version", cluster.Version)
 	d.Set("update_channel", cluster.UpdateChannel)

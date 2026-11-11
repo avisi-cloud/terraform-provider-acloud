@@ -14,6 +14,7 @@ resource "acloud_cluster" "orders" {
   region                 = "eu-west-1"
   version                = data.acloud_update_channel.stable.version
   update_channel         = data.acloud_update_channel.stable.name
+  type                   = "production"
 
   enable_multi_availability_zones = true
   node_port_access                = "allowlist"
