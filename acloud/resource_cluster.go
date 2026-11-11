@@ -81,6 +81,13 @@ func resourceCluster() *schema.Resource {
 				Optional:    true,
 				Description: "CNI plugin for Kubernetes",
 			},
+			"type": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				Description:  clusterTypeDescription + " When not set on creation, the cluster gets the type of its environment. Removing the attribute keeps the current type.",
+				ValidateFunc: validation.StringInSlice(clusterTypeValues(), false),
+			},
 			"cloud_provider": {
 				Type:        schema.TypeString,
 				Description: "Slug of the cloud provider of the cloud account, for example `aws`.",
@@ -222,6 +229,17 @@ const nodePortAccessDescription = "Where the NodePort range of the cluster nodes
 	"`public`: from anywhere. " +
 	"Applies to clusters whose nodes have public IP addresses."
 
+const clusterTypeDescription = "Type of the cluster: `production`, `staging`, `development`, `demo` or `other`. " +
+	"Changing the type of the environment, or moving the cluster to another environment, does not change the type of the cluster."
+
+func clusterTypeValues() []string {
+	values := make([]string, 0, len(acloudapi.AllClusterTypes))
+	for _, clusterType := range acloudapi.AllClusterTypes {
+		values = append(values, string(clusterType))
+	}
+	return values
+}
+
 func nodePortAccessValues() []string {
 	values := make([]string, 0, len(acloudapi.AllNodePortAccess))
 	for _, nodePortAccess := range acloudapi.AllNodePortAccess {
@@ -253,12 +271,21 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(fmt.Errorf("cannot parse nodePortAccess: %w", err))
 	}
 
+	var clusterType acloudapi.ClusterType
+	if value := d.Get("type").(string); value != "" {
+		clusterType, err = acloudapi.ParseClusterType(value)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("cannot parse type: %w", err))
+		}
+	}
+
 	createCluster := acloudapi.CreateCluster{
 		Name:                         d.Get("name").(string),
 		Description:                  d.Get("description").(string),
 		Version:                      d.Get("version").(string),
 		Region:                       d.Get("region").(string),
 		CNI:                          d.Get("cni").(string),
+		Type:                         clusterType,
 		PodSecurityStandardsProfile:  d.Get("pod_security_standards_profile").(string),
 		NodePortAccess:               nodePortAccess,
 		EnableMultiAvailabilityZones: d.Get("enable_multi_availability_zones").(bool),
@@ -293,6 +320,7 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, m interf
 		d.Set("slug", cluster.Slug)
 		d.Set("cloud_provider", cluster.CloudProvider)
 		d.Set("node_port_access", string(cluster.NodePortAccess))
+		d.Set("type", string(cluster.Type))
 		err := WaitUntilClusterHasStatus(ctx, d, m, org, *cluster, string(ClusterStateRunning))
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("error while waiting for cluster: %w", err))
@@ -367,6 +395,7 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, m interfac
 	d.Set("slug", cluster.Slug)
 	d.Set("cloud_provider", cluster.CloudProvider)
 	d.Set("cni", cluster.CNI)
+	d.Set("type", string(cluster.Type))
 	d.Set("region", cluster.Region)
 	d.Set("version", cluster.Version)
 	d.Set("update_channel", cluster.UpdateChannel)
@@ -467,6 +496,15 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, m interf
 			return diag.FromErr(fmt.Errorf("cannot parse nodePortAccess: %w", err))
 		}
 		updateCluster.NodePortAccess = &nodePortAccess
+	}
+
+	if d.HasChange("type") {
+		_, newVal := d.GetChange("type")
+		clusterType, err := acloudapi.ParseClusterType(newVal.(string))
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("cannot parse type: %w", err))
+		}
+		updateCluster.Type = &clusterType
 	}
 
 	if d.HasChange("addons") || d.HasChange("addon") {

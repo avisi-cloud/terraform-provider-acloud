@@ -32,21 +32,29 @@ type fakeClusterAPI struct {
 	requests       int
 	createBodies   []map[string]json.RawMessage
 	updateBodies   []map[string]json.RawMessage
+
+	// clusterType is the type of the cluster; empty means the API does not return a type, like an older API.
+	clusterType     acloudapi.ClusterType
+	environmentType acloudapi.ClusterType
 }
 
 func newFakeClusterAPI(t *testing.T) *fakeClusterAPI {
 	t.Helper()
-	api := &fakeClusterAPI{t: t}
+	api := &fakeClusterAPI{t: t, environmentType: acloudapi.ClusterTypeStaging}
 	clusterPath := "/api/v1/orgs/" + testOrg + "/clusters/" + testEnvironment + "/" + testClusterSlug
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/v1/orgs/"+testOrg+"/clusters/"+testEnvironment, func(w http.ResponseWriter, r *http.Request) {
 		body := api.record(r, &api.createBodies)
+		api.mu.Lock()
 		if raw, ok := body["nodePortAccess"]; ok {
-			api.mu.Lock()
 			api.nodePortAccess = api.decodeNodePortAccess(raw)
-			api.mu.Unlock()
 		}
+		api.clusterType = api.environmentType
+		if raw, ok := body["type"]; ok {
+			api.clusterType = api.decodeClusterType(raw)
+		}
+		api.mu.Unlock()
 		api.writeCluster(w)
 	})
 	mux.HandleFunc("GET "+clusterPath, func(w http.ResponseWriter, r *http.Request) {
@@ -55,11 +63,14 @@ func newFakeClusterAPI(t *testing.T) *fakeClusterAPI {
 	})
 	mux.HandleFunc("PATCH "+clusterPath, func(w http.ResponseWriter, r *http.Request) {
 		body := api.record(r, &api.updateBodies)
+		api.mu.Lock()
 		if raw, ok := body["nodePortAccess"]; ok {
-			api.mu.Lock()
 			api.nodePortAccess = api.decodeNodePortAccess(raw)
-			api.mu.Unlock()
 		}
+		if raw, ok := body["type"]; ok {
+			api.clusterType = api.decodeClusterType(raw)
+		}
+		api.mu.Unlock()
 		api.writeCluster(w)
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -110,6 +121,18 @@ func (api *fakeClusterAPI) decodeNodePortAccess(raw json.RawMessage) acloudapi.N
 	return nodePortAccess
 }
 
+func (api *fakeClusterAPI) decodeClusterType(raw json.RawMessage) acloudapi.ClusterType {
+	var value string
+	if err := json.Unmarshal(raw, &value); err != nil {
+		api.t.Errorf("type in request body is not a string: %s", raw)
+	}
+	clusterType, err := acloudapi.ParseClusterType(value)
+	if err != nil {
+		api.t.Errorf("invalid type in request body: %v", err)
+	}
+	return clusterType
+}
+
 func (api *fakeClusterAPI) writeCluster(w http.ResponseWriter) {
 	api.mu.Lock()
 	cluster := acloudapi.Cluster{
@@ -123,12 +146,24 @@ func (api *fakeClusterAPI) writeCluster(w http.ResponseWriter) {
 		EnableMultiAvailAbilityZones: true,
 		EnableNetworkEncryption:      true,
 		NodePortAccess:               api.nodePortAccess,
+		Type:                         api.clusterType,
 		Status:                       string(ClusterStateRunning),
 		CloudAccount:                 &acloudapi.CloudAccountReference{Identity: "account-1"},
 	}
 	api.mu.Unlock()
+	raw, err := json.Marshal(cluster)
+	if err != nil {
+		api.t.Errorf("failed to encode cluster: %v", err)
+	}
+	body := map[string]json.RawMessage{}
+	if err := json.Unmarshal(raw, &body); err != nil {
+		api.t.Errorf("failed to decode cluster: %v", err)
+	}
+	if cluster.Type == "" {
+		delete(body, "type")
+	}
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(cluster); err != nil {
+	if err := json.NewEncoder(w).Encode(body); err != nil {
 		api.t.Errorf("failed to encode cluster: %v", err)
 	}
 }
@@ -400,6 +435,249 @@ func TestResourceClusterNodePortAccessNotConfiguredDiff(t *testing.T) {
 			}
 			if attr == nil || attr.Old != string(value) || attr.New != string(acloudapi.NodePortAccessInternal) || attr.RequiresNew {
 				t.Fatalf("expected an in-place diff %q -> %q, got %#v", value, acloudapi.NodePortAccessInternal, attr)
+			}
+		})
+	}
+}
+
+// clusterStateWithType returns the state of an existing cluster, with type set to clusterType, or absent when
+// clusterType is empty (state written by a provider version without the attribute).
+func clusterStateWithType(t *testing.T, clusterType acloudapi.ClusterType) *terraform.InstanceState {
+	t.Helper()
+	state := clusterState(t, acloudapi.NodePortAccessInternal)
+	if clusterType != "" {
+		state.Attributes["type"] = string(clusterType)
+	}
+	return state
+}
+
+func TestResourceClusterTypeSchema(t *testing.T) {
+	s := resourceCluster().Schema["type"]
+	if s == nil {
+		t.Fatal("type is missing from the acloud_cluster resource schema")
+	}
+	if s.Type != schema.TypeString || !s.Optional || !s.Computed || s.ForceNew || s.Default != nil {
+		t.Fatalf("type must be an optional, computed, in-place updatable string without a default, got %+v", s)
+	}
+
+	ds := dataSourceCluster().Schema["type"]
+	if ds == nil {
+		t.Fatal("type is missing from the acloud_cluster data source schema")
+	}
+	if ds.Type != schema.TypeString || !ds.Computed || ds.Optional || ds.Required {
+		t.Fatalf("data source type must be a computed string, got %+v", ds)
+	}
+}
+
+func TestResourceClusterTypeValidation(t *testing.T) {
+	s := resourceCluster().Schema["type"]
+	for _, value := range acloudapi.AllClusterTypes {
+		t.Run(string(value), func(t *testing.T) {
+			if _, errs := s.ValidateFunc(string(value), "type"); len(errs) > 0 {
+				t.Fatalf("expected %q to be valid, got %v", value, errs)
+			}
+		})
+	}
+
+	for _, value := range []string{"", "Production", "STAGING", "prod", "test", "acceptance"} {
+		t.Run("invalid "+value, func(t *testing.T) {
+			api := newFakeClusterAPI(t)
+			diags := Provider().ValidateResource("acloud_cluster", terraform.NewResourceConfigRaw(clusterConfig(map[string]interface{}{
+				"type": value,
+			})))
+			if !diags.HasError() {
+				t.Fatalf("expected type %q to be rejected", value)
+			}
+			if api.requests != 0 {
+				t.Fatalf("expected no API calls during validation, got %d", api.requests)
+			}
+		})
+	}
+}
+
+func TestResourceClusterCreateType(t *testing.T) {
+	t.Run("not configured is left out and the environment type is stored", func(t *testing.T) {
+		api := newFakeClusterAPI(t)
+		api.environmentType = acloudapi.ClusterTypeDemo
+		d := schema.TestResourceDataRaw(t, resourceCluster().Schema, clusterConfig(nil))
+
+		if diags := resourceClusterCreate(context.Background(), d, api.meta()); diags.HasError() {
+			t.Fatalf("unexpected error: %v", diags)
+		}
+
+		if len(api.createBodies) != 1 {
+			t.Fatalf("expected 1 create request, got %d", len(api.createBodies))
+		}
+		if raw, ok := api.createBodies[0]["type"]; ok {
+			t.Fatalf("create request contains type %s, want it left out", raw)
+		}
+		if got := d.Get("type").(string); got != string(acloudapi.ClusterTypeDemo) {
+			t.Fatalf("type in state = %q, want %q", got, acloudapi.ClusterTypeDemo)
+		}
+	})
+
+	for _, value := range acloudapi.AllClusterTypes {
+		t.Run(string(value)+" is sent", func(t *testing.T) {
+			api := newFakeClusterAPI(t)
+			d := schema.TestResourceDataRaw(t, resourceCluster().Schema, clusterConfig(map[string]interface{}{"type": string(value)}))
+
+			if diags := resourceClusterCreate(context.Background(), d, api.meta()); diags.HasError() {
+				t.Fatalf("unexpected error: %v", diags)
+			}
+
+			if len(api.createBodies) != 1 {
+				t.Fatalf("expected 1 create request, got %d", len(api.createBodies))
+			}
+			raw, ok := api.createBodies[0]["type"]
+			if !ok {
+				t.Fatal("create request does not contain type")
+			}
+			if want := `"` + string(value) + `"`; string(raw) != want {
+				t.Fatalf("type in create request = %s, want %s", raw, want)
+			}
+			if got := d.Get("type").(string); got != string(value) {
+				t.Fatalf("type in state = %q, want %q", got, value)
+			}
+		})
+	}
+}
+
+func TestResourceClusterReadType(t *testing.T) {
+	values := append([]acloudapi.ClusterType{""}, acloudapi.AllClusterTypes...)
+	for _, value := range values {
+		name := string(value)
+		if value == "" {
+			name = "not returned by the API"
+		}
+		t.Run(name, func(t *testing.T) {
+			api := newFakeClusterAPI(t)
+			api.clusterType = value
+
+			d := resourceCluster().Data(clusterStateWithType(t, ""))
+			if diags := resourceClusterRead(context.Background(), d, api.meta()); diags.HasError() {
+				t.Fatalf("unexpected error: %v", diags)
+			}
+			if got := d.Get("type").(string); got != string(value) {
+				t.Fatalf("resource type = %q, want %q", got, value)
+			}
+
+			diff, err := resourceCluster().Diff(context.Background(), d.State(), terraform.NewResourceConfigRaw(clusterConfig(nil)), nil)
+			if err != nil {
+				t.Fatalf("unexpected diff error: %v", err)
+			}
+			if diff != nil && diff.Attributes["type"] != nil {
+				t.Fatalf("expected no diff for type after read without type in the config, got %#v", diff.Attributes["type"])
+			}
+
+			ds := schema.TestResourceDataRaw(t, dataSourceCluster().Schema, map[string]interface{}{
+				"environment": testEnvironment,
+				"slug":        testClusterSlug,
+			})
+			if diags := dataClusterRead(context.Background(), ds, api.meta()); diags.HasError() {
+				t.Fatalf("unexpected error: %v", diags)
+			}
+			if got := ds.Get("type").(string); got != string(value) {
+				t.Fatalf("data source type = %q, want %q", got, value)
+			}
+		})
+	}
+}
+
+func TestResourceClusterUpdateType(t *testing.T) {
+	tests := []struct {
+		name   string
+		server acloudapi.ClusterType
+		config map[string]interface{}
+		// want is the expected type in the PATCH body; empty means the key must be left out.
+		want acloudapi.ClusterType
+	}{
+		{
+			name:   "changed value is sent",
+			server: acloudapi.ClusterTypeStaging,
+			config: clusterConfig(map[string]interface{}{"type": "production"}),
+			want:   acloudapi.ClusterTypeProduction,
+		},
+		{
+			name:   "changed value is sent from production",
+			server: acloudapi.ClusterTypeProduction,
+			config: clusterConfig(map[string]interface{}{"type": "other"}),
+			want:   acloudapi.ClusterTypeOther,
+		},
+		{
+			name:   "unchanged configured value is left out",
+			server: acloudapi.ClusterTypeDemo,
+			config: clusterConfig(map[string]interface{}{"type": "demo", "description": "changed"}),
+		},
+		{
+			name:   "not configured is left out",
+			server: acloudapi.ClusterTypeDevelopment,
+			config: clusterConfig(map[string]interface{}{"description": "changed"}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			r := resourceCluster()
+			api := newFakeClusterAPI(t)
+			api.clusterType = tt.server
+			meta := api.meta()
+
+			state := clusterStateWithType(t, tt.server)
+			diff, err := r.Diff(ctx, state, terraform.NewResourceConfigRaw(tt.config), meta)
+			if err != nil {
+				t.Fatalf("unexpected diff error: %v", err)
+			}
+			if diff == nil || diff.Empty() {
+				t.Fatal("expected a diff")
+			}
+			if diff.RequiresNew() {
+				t.Fatalf("expected an in-place update, got a replacement: %v", diff)
+			}
+
+			newState, diags := r.Apply(ctx, state, diff, meta)
+			if diags.HasError() {
+				t.Fatalf("unexpected apply error: %v", diags)
+			}
+
+			if len(api.updateBodies) != 1 {
+				t.Fatalf("expected 1 update request, got %d", len(api.updateBodies))
+			}
+			raw, sent := api.updateBodies[0]["type"]
+			switch {
+			case tt.want == "" && sent:
+				t.Fatalf("update request contains type %s, want it left out", raw)
+			case tt.want != "" && !sent:
+				t.Fatalf("update request does not contain type, want %q", tt.want)
+			case tt.want != "" && string(raw) != `"`+string(tt.want)+`"`:
+				t.Fatalf("type in update request = %s, want %q", raw, tt.want)
+			}
+
+			wantState := tt.server
+			if tt.want != "" {
+				wantState = tt.want
+			}
+			if got := newState.Attributes["type"]; got != string(wantState) {
+				t.Fatalf("type in state after update = %q, want %q", got, wantState)
+			}
+		})
+	}
+}
+
+func TestResourceClusterTypeNotConfiguredDiff(t *testing.T) {
+	r := resourceCluster()
+	values := append([]acloudapi.ClusterType{""}, acloudapi.AllClusterTypes...)
+	for _, value := range values {
+		name := string(value)
+		if value == "" {
+			name = "absent from state"
+		}
+		t.Run(name, func(t *testing.T) {
+			diff, err := r.Diff(context.Background(), clusterStateWithType(t, value), terraform.NewResourceConfigRaw(clusterConfig(nil)), nil)
+			if err != nil {
+				t.Fatalf("unexpected diff error: %v", err)
+			}
+			if diff != nil && diff.Attributes["type"] != nil {
+				t.Fatalf("expected no diff for type when it is not configured, got %#v", diff.Attributes["type"])
 			}
 		})
 	}
