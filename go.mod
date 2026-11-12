@@ -5,7 +5,8 @@ go 1.26.0
 toolchain go1.27.3
 
 require (
-	github.com/avisi-cloud/go-client v0.20.0
+	github.com/avisi-cloud/go-client v0.22.0
+	github.com/hashicorp/go-cty v1.5.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.1
 	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e
 )
@@ -17,7 +18,6 @@ require (
 	github.com/go-resty/resty/v2 v2.17.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/hashicorp/go-cty v1.5.0 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-plugin v1.7.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
