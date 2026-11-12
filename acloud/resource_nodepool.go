@@ -206,12 +206,12 @@ const volumeSizeDescription = "Size in GB of the volume new nodes boot from, whe
 	"Applies only to nodes created after the change."
 
 const securityUpdatesOnJoinDescription = "Which OS package updates a new node installs during bring-up, before it joins the cluster. " +
-	"`OFF`: no updates (default). " +
-	"`INSTALL`: the security updates only. " +
-	"`INSTALL_AND_REBOOT`: like `INSTALL`, then reboots the node when the updates require it. " +
-	"`UPGRADE`: all pending package updates, including non-security updates. " +
-	"`UPGRADE_AND_REBOOT`: like `UPGRADE`, then reboots the node when the updates require it. " +
-	"Applies only when a node first joins, not to in-place upgrades of existing nodes."
+	"`OFF` installs nothing and is the default. " +
+	"`INSTALL` installs only the security updates. " +
+	"`INSTALL_AND_REBOOT` does the same as `INSTALL` and then reboots the node when the updates require it. " +
+	"`UPGRADE` installs all pending package updates, including updates that are not security updates. " +
+	"`UPGRADE_AND_REBOOT` does the same as `UPGRADE` and then reboots the node when the updates require it. " +
+	"The setting applies only when a node first joins, not to in-place upgrades of existing nodes."
 
 func securityUpdatesOnJoinValues() []string {
 	values := make([]string, 0, len(acloudapi.AllNodePoolSecurityUpdatesOnJoin))
