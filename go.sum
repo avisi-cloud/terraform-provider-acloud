@@ -3,8 +3,8 @@ github.com/agext/levenshtein v1.2.3/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki
 github.com/apparentlymart/go-textseg/v12 v12.0.0/go.mod h1:S/4uRK2UtaQttw1GenVJEynmyUenKwP++x/+DdGV/Ec=
 github.com/apparentlymart/go-textseg/v15 v15.0.0 h1:uYvfpb3DyLSCGWnctWKGj857c6ew1u1fNQOlOtuGxQY=
 github.com/apparentlymart/go-textseg/v15 v15.0.0/go.mod h1:K8XmNZdhEBkdlyDdvbmmsvpAG721bKi0joRfFdHIWJ4=
-github.com/avisi-cloud/go-client v0.21.1-0.20261111170616-d11f8a069326 h1:q2fgPsFgMDzBb5tN/WgY+E/SPuQGqJXbNayPcDVj6ls=
-github.com/avisi-cloud/go-client v0.21.1-0.20261111170616-d11f8a069326/go.mod h1:7MKo9iuEFV2KlUOP0yP7A9XrR0xHnuCdM7QhVwdtcLY=
+github.com/avisi-cloud/go-client v0.21.1-0.20261112130416-a20aa6285840 h1:ZonR+++C+ZMCg8kguij8C8cJijVA2X8l/oxIWYWhNx8=
+github.com/avisi-cloud/go-client v0.21.1-0.20261112130416-a20aa6285840/go.mod h1:7MKo9iuEFV2KlUOP0yP7A9XrR0xHnuCdM7QhVwdtcLY=
 github.com/bufbuild/protocompile v0.14.1 h1:iA73zAf/fyljNjQKwYzUHD6AD4R8KMasmwa/FBatYVw=
 github.com/bufbuild/protocompile v0.14.1/go.mod h1:ppVdAIhbr2H8asPk6k4pY7t9zB1OU5DoEw9xY/FUi1c=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
