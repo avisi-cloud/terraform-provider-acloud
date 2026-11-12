@@ -53,7 +53,7 @@ data "acloud_update_channel" "channel" {
 
 resource "acloud_environment" "test" {
   name = var.environment
-  type = "demo" # production, staging, development, demo or other
+  type = "demo" # production, staging, test, development, demo or other
 }
 
 resource "acloud_cluster" "cyso" {

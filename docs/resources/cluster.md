@@ -71,7 +71,7 @@ resource "acloud_cluster" "orders" {
 - `organisation_slug` (String, Deprecated) Deprecated: use `organisation` instead.
 - `pod_security_standards_profile` (String) Pod Security Standards used by default within the cluster
 - `stopped` (Boolean, Deprecated) Stops the Cluster if set to true. False by default
-- `type` (String) Type of the cluster: `production`, `staging`, `development`, `demo` or `other`. Changing the type of the environment, or moving the cluster to another environment, does not change the type of the cluster. When not set on creation, the cluster gets the type of its environment. Removing the attribute keeps the current type.
+- `type` (String) Type of the cluster: `production`, `staging`, `test`, `development`, `demo` or `other`. Changing the type of the environment, or moving the cluster to another environment, does not change the type of the cluster. When not set on creation, the cluster gets the type of its environment. Removing the attribute keeps the current type.
 - `update_channel` (String) Avisi Cloud Kubernetes Update Channel that the Cluster follows
 
 ### Read-Only
