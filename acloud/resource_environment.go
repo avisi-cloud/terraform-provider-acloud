@@ -54,7 +54,7 @@ func resourceEnvironment() *schema.Resource {
 			"type": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Type of the Environment. Available options: production, staging, development, demo, other",
+				Description: "Type of the Environment. Available options: production, staging, test, development, demo, other",
 			},
 			"description": {
 				Type:        schema.TypeString,

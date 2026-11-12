@@ -15,7 +15,7 @@ Create an environment
 ```terraform
 resource "acloud_environment" "production" {
   name        = "production"
-  type        = "production" # production, staging, development, demo or other
+  type        = "production" # production, staging, test, development, demo or other
   description = "Production workloads"
 }
 ```
@@ -26,7 +26,7 @@ resource "acloud_environment" "production" {
 ### Required
 
 - `name` (String) Name of the Environment
-- `type` (String) Type of the Environment. Available options: production, staging, development, demo, other
+- `type` (String) Type of the Environment. Available options: production, staging, test, development, demo, other
 
 ### Optional
 

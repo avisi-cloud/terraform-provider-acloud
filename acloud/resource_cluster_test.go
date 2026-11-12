@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
+	"strings"
 	"sync"
 	"testing"
 
@@ -469,6 +471,24 @@ func TestResourceClusterTypeSchema(t *testing.T) {
 	}
 }
 
+func TestResourceClusterTypeValues(t *testing.T) {
+	want := []string{"production", "staging", "test", "development", "demo", "other"}
+	if got := clusterTypeValues(); !reflect.DeepEqual(got, want) {
+		t.Fatalf("clusterTypeValues() = %v, want %v", got, want)
+	}
+
+	quoted := make([]string, len(want))
+	for i, value := range want {
+		quoted[i] = "`" + value + "`"
+	}
+	list := strings.Join(quoted[:len(quoted)-1], ", ") + " or " + quoted[len(quoted)-1]
+	for _, description := range []string{resourceCluster().Schema["type"].Description, dataSourceCluster().Schema["type"].Description} {
+		if !strings.Contains(description, list) {
+			t.Fatalf("type description %q does not list %s", description, list)
+		}
+	}
+}
+
 func TestResourceClusterTypeValidation(t *testing.T) {
 	s := resourceCluster().Schema["type"]
 	for _, value := range acloudapi.AllClusterTypes {
@@ -479,7 +499,7 @@ func TestResourceClusterTypeValidation(t *testing.T) {
 		})
 	}
 
-	for _, value := range []string{"", "Production", "STAGING", "prod", "test", "acceptance"} {
+	for _, value := range []string{"", "Production", "STAGING", "prod", "testing", "TEST", "acceptance"} {
 		t.Run("invalid "+value, func(t *testing.T) {
 			api := newFakeClusterAPI(t)
 			diags := Provider().ValidateResource("acloud_cluster", terraform.NewResourceConfigRaw(clusterConfig(map[string]interface{}{
@@ -602,6 +622,12 @@ func TestResourceClusterUpdateType(t *testing.T) {
 			server: acloudapi.ClusterTypeProduction,
 			config: clusterConfig(map[string]interface{}{"type": "other"}),
 			want:   acloudapi.ClusterTypeOther,
+		},
+		{
+			name:   "changed value is sent to test",
+			server: acloudapi.ClusterTypeDevelopment,
+			config: clusterConfig(map[string]interface{}{"type": "test"}),
+			want:   acloudapi.ClusterTypeTest,
 		},
 		{
 			name:   "unchanged configured value is left out",

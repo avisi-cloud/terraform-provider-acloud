@@ -47,7 +47,7 @@ data "acloud_cluster" "orders" {
 - `pod_security_standards_profile` (String) Pod Security Standards used by default within the cluster
 - `region` (String) Region of the Cloud Provider to deploy the cluster in
 - `status` (String) Avisi AME Cluster status
-- `type` (String) Type of the cluster: `production`, `staging`, `development`, `demo` or `other`. Changing the type of the environment, or moving the cluster to another environment, does not change the type of the cluster.
+- `type` (String) Type of the cluster: `production`, `staging`, `test`, `development`, `demo` or `other`. Changing the type of the environment, or moving the cluster to another environment, does not change the type of the cluster.
 - `update_channel` (String) Avisi AME update channel that the cluster follows
 - `version` (String) Avisi AME version of the cluster
 

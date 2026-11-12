@@ -229,7 +229,7 @@ const nodePortAccessDescription = "Where the NodePort range of the cluster nodes
 	"`public`: from anywhere. " +
 	"Applies to clusters whose nodes have public IP addresses."
 
-const clusterTypeDescription = "Type of the cluster: `production`, `staging`, `development`, `demo` or `other`. " +
+const clusterTypeDescription = "Type of the cluster: `production`, `staging`, `test`, `development`, `demo` or `other`. " +
 	"Changing the type of the environment, or moving the cluster to another environment, does not change the type of the cluster."
 
 func clusterTypeValues() []string {
