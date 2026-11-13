@@ -8,7 +8,7 @@ require (
 	github.com/avisi-cloud/go-client v0.22.0
 	github.com/hashicorp/go-cty v1.5.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.1
-	golang.org/x/exp v0.0.0-20261109185158-a52e3aef5920
+	golang.org/x/exp v0.0.0-20261112173441-d10d3b464990
 )
 
 require (
